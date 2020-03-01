@@ -3,15 +3,17 @@ module Types exposing (..)
 import Lamdera exposing (ClientId)
 import Set exposing (Set)
 import Keyboard
-import Game.Resources  exposing (Resources)
+import Playground
+import Playground.Advanced as Playground
+import Playground.Extra as Playground
 
 type alias FrontendModel =
     { messages : List ChatMsg, messageFieldContent : String
-    , keys : List Keyboard.Key
-    ,time : Float
-    , screen : (Int,Int)
-    , resources : Resources
-    , character : Character
+    , game : Playground.Game Memory
+    }
+
+type alias Memory = {
+    character:Character
     }
 
 type alias Character = {
@@ -26,9 +28,7 @@ type alias BackendModel =
 type FrontendMsg
     = MessageFieldChanged String
     | MessageSubmitted
-    | ScreenSize Int Int
-    | Tick Float
-    | Keys Keyboard.Msg
+    | GameMsg Playground.Msg
     | Noop
 
 

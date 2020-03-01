@@ -4,21 +4,20 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Debug exposing (toString)
 import Html exposing (Html, input, text)
-import Html.Attributes exposing (autofocus, id, placeholder, style, type_, value)
+import Html.Attributes exposing (src,autofocus, id, placeholder, style, type_, value)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as D
 import Lamdera
 import Task
 import Types exposing (..)
-import Game.TwoD as Game
-import Game.TwoD.Camera as Camera
-import Game.TwoD.Render as Render
-import Game.Resources as Resources
 import Color
 import Keyboard
 import Keyboard.Arrows as Arrows
 import Simplex
 import World
+import Playground exposing (Computer, Shape)
+import Playground.Advanced as Playground
+import Playground.Extra as Playground
 
 
 {-| Lamdera applications define 'app' instead of 'main'.
@@ -45,11 +44,8 @@ app =
 
 subscriptions : Model -> Sub FrontendMsg
 subscriptions model =
-    Sub.batch
-    [ Events.onResize ScreenSize
-    , Sub.map Keys Keyboard.subscriptions
-    , Events.onAnimationFrameDelta ((\dt -> dt / 1000) >> Tick)
-    ]
+    Sub.map GameMsg Playground.subscriptions.all
+
 
 type alias Model =
     FrontendModel
@@ -60,21 +56,18 @@ init =
     -- When the app loads, we have no messages and our message field is blank.
     -- We send an initial message to the backend, letting it know we've joined,
     -- so it knows to send us history and new messages
-    (
-        { messages = []
-        , messageFieldContent = ""
-        , character = {coords=(0,0)}
-        , keys = []
-        , time = 0
-        , screen = (800,600)
-        , resources = Resources.init
-        }
-        , Cmd.batch
-            [ Lamdera.sendToBackend ClientJoin
-            ,Task.perform (\{ viewport } -> ScreenSize (round viewport.width) (round viewport.height)) Dom.getViewport
-        ]
-    )
+    let (gameModel, gameCmd) = game.init
+    in
+    ({ messages = []
+                         , messageFieldContent = ""
+                         , game = gameModel
+                         }
 
+        , Cmd.batch
+            [Cmd.map GameMsg gameCmd,
+            Lamdera.sendToBackend ClientJoin
+              ]
+    )
 
 
 {-| This is the normal frontend update function. It handles all messages that can occur on the frontend.
@@ -82,29 +75,7 @@ init =
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
-        ScreenSize width height ->
-                    ( { model | screen = ( width, height ) }
-                    , Cmd.none
-                    )
 
-        Tick dt ->
-            (
-             {
-             model
-              | character = updateCharacter dt model.keys model.character}
-              {-{ model
-                | mario = tick dt model.keys model.mario
-                , time = dt + model.time
-                , camera = Camera.moveTo ( model.mario.x, model.mario.y + 0.75 ) model.camera
-              }-}
-            , Cmd.none
-            )
-        Keys keyMsg ->
-                    let
-                        keys =
-                            Keyboard.update keyMsg model.keys
-                    in
-                    ( { model | keys = keys }, Cmd.none )
 
         -- User has changed the contents of the message field
         MessageFieldChanged s ->
@@ -119,20 +90,15 @@ update msg model =
                 , scrollChatToBottom
                 ]
             )
+        GameMsg submsg ->
+            game.update submsg model.game
+            |> Tuple.mapBoth (\g -> {model | game = g}) (Cmd.map GameMsg)
 
         -- Empty msg that does no operations
         Noop ->
             ( model, Cmd.none )
 
-updateCharacter dt keys character =
-    let (x, y) = character.coords
-        arrows = Arrows.wasd keys
-    in
-    {character | coords =
-        (x + (toFloat arrows.x * dt * speed),y + (toFloat arrows.y * dt * speed))
-    }
 
-speed = 10
 
 
 {-| This is the added update function. It handles all messages that can arrive from the backend.
@@ -172,15 +138,48 @@ view : Model -> Html FrontendMsg
 view model =
     Html.div []
     [   Html.node "style" [] [text css]
-    ,   Game.render
-            { time = 0
-            , size = model.screen
-            , camera = Camera.fixedHeight 50 model.character.coords
-            }
-            ( Render.shape Render.rectangle {color=Color.yellow,position = model.character.coords,size = (1,1)}
-             :: World.render)
+     , game.view model.game
     ]
 
+
+game  =
+    Playground.embed render updateGame
+    {
+        character = {coords = (0,0)}
+    }
+
+
+render : Computer -> Memory -> List Shape
+render computer memory =
+    World.render ++
+    [Playground.circle Playground.red 10
+    |> Playground.move (Tuple.first memory.character.coords) (Tuple.second memory.character.coords)
+    ]
+
+updateGame : Computer -> Memory -> Memory
+updateGame computer memory =
+    {memory | character = updateCharacter computer memory.character}
+
+
+updateCharacter computer character =
+    let (x, y) = character.coords
+        d = Playground.delta computer.time |> toFloat
+    in
+    {character | coords =
+        (x + (Playground.toX computer.keyboard * speed * d)
+        ,y + (Playground.toY computer.keyboard * speed * d))
+    }
+
+
+updateCharacter2 dt keys character =
+    let (x, y) = character.coords
+        arrows = Arrows.wasd keys
+    in
+    {character | coords =
+        (x + (toFloat arrows.x * dt * speed),y + (toFloat arrows.y * dt * speed))
+    }
+
+speed = 0.5
 
 css = """
 body {

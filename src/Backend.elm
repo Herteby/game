@@ -1,9 +1,7 @@
 module Backend exposing (Model, app)
 
-import Dict
+import AssocList as Assoc
 import Lamdera exposing (ClientId, SessionId)
-import Set exposing (Set, map)
-import Task
 import Types exposing (..)
 
 
@@ -23,7 +21,7 @@ type alias Model =
 init : ( Model, Cmd BackendMsg )
 init =
     ( { messages = []
-      , clients = Dict.empty
+      , clients = Assoc.empty
       , accounts = []
       }
     , Cmd.none
@@ -44,7 +42,7 @@ updateFromFrontend sessionId clientId msg model =
         ClientJoin ->
             let
                 newModel =
-                    { model | clients = Dict.insert clientId NotLoggedIn model.clients }
+                    { model | clients = Assoc.insert clientId NotLoggedIn model.clients }
 
                 sendHelloMessageToAllClients =
                     broadcast newModel.clients (ClientJoinReceived clientId)
@@ -86,6 +84,6 @@ updateFromFrontend sessionId clientId msg model =
 
 broadcast clients msg =
     clients
-        |> Dict.keys
+        |> Assoc.keys
         |> List.map (\clientId -> Lamdera.sendToFrontend clientId msg)
         |> Cmd.batch

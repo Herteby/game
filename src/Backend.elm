@@ -21,7 +21,12 @@ type alias Model =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { messages = [], clients = Set.empty }, Cmd.none )
+    ( { messages = []
+      , clients = Set.empty
+      , accounts = []
+      }
+    , Cmd.none
+    )
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -62,6 +67,20 @@ updateFromFrontend sessionId clientId msg model =
             ( { model | messages = ( clientId, text ) :: model.messages }
             , broadcast model.clients (RoomMsgReceived ( clientId, text ))
             )
+
+        CreateAccount account ->
+            if List.any (\a -> a.username == account.username) model.accounts then
+                ( model, Cmd.none )
+
+            else
+                ( { model | accounts = account :: model.accounts }, Cmd.none )
+
+        Login account ->
+            if List.any (\a -> a.username == account.username && a.passwordHash == account.passwordHash) model.accounts then
+                ( model, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
 
 broadcast clients msg =

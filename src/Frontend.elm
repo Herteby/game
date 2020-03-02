@@ -1,23 +1,17 @@
 module Frontend exposing (Model, app)
 
 import Browser.Dom as Dom
-import Browser.Events as Events
-import Debug exposing (toString)
+import Character exposing (Direction(..))
 import Html exposing (Html, input, text)
-import Html.Attributes exposing (src,autofocus, id, placeholder, style, type_, value)
+import Html.Attributes exposing (..)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as D
 import Lamdera
-import Task
-import Types exposing (..)
-import Color
-import Keyboard
-import Keyboard.Arrows as Arrows
-import Simplex
-import World
 import Playground exposing (Computer, Shape)
 import Playground.Advanced as Playground
-import Playground.Extra as Playground
+import Task
+import Types exposing (..)
+import World
 
 
 {-| Lamdera applications define 'app' instead of 'main'.
@@ -56,17 +50,18 @@ init =
     -- When the app loads, we have no messages and our message field is blank.
     -- We send an initial message to the backend, letting it know we've joined,
     -- so it knows to send us history and new messages
-    let (gameModel, gameCmd) = game.init
+    let
+        ( gameModel, gameCmd ) =
+            game.init
     in
-    ({ messages = []
-                         , messageFieldContent = ""
-                         , game = gameModel
-                         }
-
-        , Cmd.batch
-            [Cmd.map GameMsg gameCmd,
-            Lamdera.sendToBackend ClientJoin
-              ]
+    ( { messages = []
+      , messageFieldContent = ""
+      , game = gameModel
+      }
+    , Cmd.batch
+        [ Cmd.map GameMsg gameCmd
+        , Lamdera.sendToBackend ClientJoin
+        ]
     )
 
 
@@ -75,8 +70,6 @@ init =
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
-
-
         -- User has changed the contents of the message field
         MessageFieldChanged s ->
             ( { model | messageFieldContent = s }, Cmd.none )
@@ -90,15 +83,19 @@ update msg model =
                 , scrollChatToBottom
                 ]
             )
+
         GameMsg submsg ->
             game.update submsg model.game
-            |> Tuple.mapBoth (\g -> {model | game = g}) (Cmd.map GameMsg)
+                |> Tuple.mapBoth (\g -> { model | game = g }) (Cmd.map GameMsg)
+
+        SelectedCharacter variant ->
+            ( { model | game = Playground.edit (\_ g -> { g | character = g.character |> (\c -> { c | variant = variant }) }) model.game }
+            , Cmd.none
+            )
 
         -- Empty msg that does no operations
         Noop ->
             ( model, Cmd.none )
-
-
 
 
 {-| This is the added update function. It handles all messages that can arrive from the backend.
@@ -117,75 +114,121 @@ updateFromBackend msg model =
     , Cmd.batch [ scrollChatToBottom ]
     )
 
-{-
-    Html.div (style "padding" "10px" :: fontStyles)
-        [ model.messages
-            |> List.reverse
-            |> List.map viewMessage
-            |> Html.div
-                [ id "message-box"
-                , style "height" "400px"
-                , style "overflow" "auto"
-                , style "margin-bottom" "15px"
-                ]
-        , chatInput model MessageFieldChanged
-        , Html.button (onClick MessageSubmitted :: fontStyles) [ text "Send" ]
 
-        ]
+
+{-
+   Html.div (style "padding" "10px" :: fontStyles)
+       [ model.messages
+           |> List.reverse
+           |> List.map viewMessage
+           |> Html.div
+               [ id "message-box"
+               , style "height" "400px"
+               , style "overflow" "auto"
+               , style "margin-bottom" "15px"
+               ]
+       , chatInput model MessageFieldChanged
+       , Html.button (onClick MessageSubmitted :: fontStyles) [ text "Send" ]
+
+       ]
 -}
+
 
 view : Model -> Html FrontendMsg
 view model =
     Html.div []
-    [   Html.node "style" [] [text css]
-     , game.view model.game
-    ]
+        [ Html.node "style" [] [ text css ]
+        , characterPicker
+        , game.view model.game
+        ]
 
 
-game  =
-    Playground.embed render updateGame
-    {
-        character = {coords = (0,0)}
-    }
+characterPicker =
+    Html.div [ class "characterPicker" ]
+        (List.range 1 40
+            |> List.map
+                (\variant ->
+                    Html.button
+                        [ class "character"
+                        , style "background-image" ("url(" ++ Character.url variant ++ ")")
+                        , onClick (SelectedCharacter variant)
+                        ]
+                        []
+                )
+        )
+
+
+game =
+    Playground.embed render
+        updateGame
+        { character =
+            { coords = ( 0, 0 )
+            , direction = Down
+            , moving = False
+            , variant = 1
+            }
+        }
 
 
 render : Computer -> Memory -> List Shape
 render computer memory =
-    World.render ++
-    [Playground.circle Playground.red 10
-    |> Playground.move (Tuple.first memory.character.coords) (Tuple.second memory.character.coords)
-    ]
+    World.render
+        ++ [ Character.render computer.time memory.character
+                |> Playground.move (Tuple.first memory.character.coords) (Tuple.second memory.character.coords)
+                |> Playground.scale 3
+           ]
+
 
 updateGame : Computer -> Memory -> Memory
 updateGame computer memory =
-    {memory | character = updateCharacter computer memory.character}
+    { memory | character = Character.update computer memory.character }
 
 
-updateCharacter computer character =
-    let (x, y) = character.coords
-        d = Playground.delta computer.time |> toFloat
-    in
-    {character | coords =
-        (x + (Playground.toX computer.keyboard * speed * d)
-        ,y + (Playground.toY computer.keyboard * speed * d))
-    }
-
-
-updateCharacter2 dt keys character =
-    let (x, y) = character.coords
-        arrows = Arrows.wasd keys
-    in
-    {character | coords =
-        (x + (toFloat arrows.x * dt * speed),y + (toFloat arrows.y * dt * speed))
-    }
-
-speed = 0.5
-
-css = """
+css =
+    """
 body {
     background:black;
+    color:white;
     margin:0;
+    overflow:hidden;
 }
+.characterPicker {
+    position:fixed;
+    top:0;
+    background:rgba(0,0,0,0.7);
+    margin:10px;
+    padding:10px;
+    border-radius:10px;
+}
+.character {
+    width:78px;
+    height:120px;
+    border:none;
+    background-color:transparent;
+    outline:none;
+    background-size: 234px 432px;
+    background-position: center top;
+    image-rendering:pixelated;
+    margin:10px;
+    border-radius:10px;
+    cursor:pointer;
+}
+.character:hover {
+    animation: walk 0.5s linear infinite;
+    background-color:rgba(0,0,0,0.3);
+}
+
+@keyframes walk {
+    0% {background-position: center top;}
+    25% {background-position: center top;}
+    25.0001% {background-position: left top;}
+    50% {background-position: left top;}
+    50.0001% {background-position: center top;}
+    75% {background-position: center top;}
+    75.0001% {background-position: right top;}
+    100% {background-position: right top;}
+}
+
 """
 
 

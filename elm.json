@@ -8,6 +8,7 @@
         "direct": {
             "Herteby/simplex-noise": "1.0.0",
             "avh4/elm-color": "1.0.0",
+            "billstclair/elm-sha256": "1.0.9",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.3",
             "elm/html": "1.0.0",
@@ -25,6 +26,7 @@
             "danfishgold/base64-bytes": "1.0.3",
             "elm/bytes": "1.0.8",
             "elm/random": "1.0.0",
+            "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "elm-community/list-extra": "8.2.3",
             "elm-community/random-extra": "3.1.0",

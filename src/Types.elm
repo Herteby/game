@@ -1,9 +1,9 @@
 module Types exposing (..)
 
 import Character exposing (Character)
+import Dict exposing (Dict)
 import Lamdera exposing (ClientId)
 import Playground
-import Set exposing (Set)
 
 
 type alias FrontendModel =
@@ -20,9 +20,14 @@ type alias Memory =
 
 type alias BackendModel =
     { messages : List Message
-    , clients : Set ClientId
+    , clients : Dict ClientId ClientStatus
     , accounts : List Account
     }
+
+
+type ClientStatus
+    = LoggedIn Account
+    | NotLoggedIn
 
 
 type alias Account =

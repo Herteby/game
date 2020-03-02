@@ -171,12 +171,13 @@ game =
 
 
 render : Computer -> Memory -> List Shape
-render computer memory =
+render computer { character } =
     World.render
-        ++ [ Character.render computer.time memory.character
-                |> Playground.move (Tuple.first memory.character.coords) (Tuple.second memory.character.coords)
+        ++ [ Character.render computer.time character
+                |> Playground.move (Tuple.first character.coords) (Tuple.second character.coords)
                 |> Playground.scale 3
            ]
+        |> List.map (Playground.move (negate (Tuple.first character.coords)) (negate (Tuple.second character.coords)))
 
 
 updateGame : Computer -> Memory -> Memory

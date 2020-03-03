@@ -12,16 +12,17 @@ init : LoginModel
 init =
     { username = ""
     , password = ""
+    , failed = False
     }
 
 
 update msg model =
     case msg of
         LoginUsername string ->
-            ( { model | username = string }, Cmd.none )
+            ( { model | username = string, failed = False }, Cmd.none )
 
         LoginPassword string ->
-            ( { model | password = string }, Cmd.none )
+            ( { model | password = string, failed = False }, Cmd.none )
 
         Submit ->
             ( model
@@ -45,6 +46,11 @@ view model =
                     ]
                     []
                 ]
+            , if model.failed then
+                text "Wrong username or password"
+
+              else
+                text ""
             , button [] [ text "Log in" ]
             ]
         ]

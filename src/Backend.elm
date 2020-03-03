@@ -40,7 +40,7 @@ updateFromFrontend sessionId clientId msg model =
     case msg of
         CreateAccount username passwordHash variant ->
             if List.any (\a -> a.username == username) model.accounts then
-                ( model, Cmd.none )
+                ( model, Lamdera.sendToFrontend clientId RegisterFailed )
 
             else
                 case Character.create variant of
@@ -78,7 +78,7 @@ updateFromFrontend sessionId clientId msg model =
                     )
 
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( model, Lamdera.sendToFrontend clientId LoginFailed )
 
         UpdateCharacter character ->
             case List.find (\a -> a.loggedIn == Just clientId) model.accounts of

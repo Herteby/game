@@ -1,4 +1,4 @@
-module Types exposing (..)
+module Evergreen.Type.V28 exposing (..)
 
 import Character exposing (Character)
 import Dict exposing (Dict)
@@ -59,8 +59,6 @@ type BackendMsg
 
 type ToFrontend
     = LoggedIn Account
-    | LoginFailed
-    | RegisterFailed
     | UpdateOtherCharacter String Character
 
 
@@ -69,7 +67,6 @@ type alias RegisterModel =
     , password : String
     , password2 : String
     , character : Maybe Int
-    , failed : Bool
     }
 
 
@@ -84,7 +81,6 @@ type RegisterMsg
 type alias LoginModel =
     { username : String
     , password : String
-    , failed : Bool
     }
 
 

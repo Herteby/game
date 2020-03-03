@@ -23,13 +23,14 @@ init =
     , password = ""
     , password2 = ""
     , character = Nothing
+    , failed = False
     }
 
 
 update msg model =
     case msg of
         InputUsername string ->
-            ( { model | username = string }, Cmd.none )
+            ( { model | username = string, failed = False }, Cmd.none )
 
         InputPassword string ->
             ( { model | password = string }, Cmd.none )
@@ -66,6 +67,11 @@ view model =
                 [ text "Username"
                 , input [ onInput InputUsername, value model.username ] []
                 ]
+            , if model.failed then
+                text "Username already taken"
+
+              else
+                text ""
             , label []
                 [ text "Password"
                 , input

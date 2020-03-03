@@ -80,7 +80,7 @@ updateFromFrontend sessionId clientId msg model =
                 Nothing ->
                     ( model, Lamdera.sendToFrontend clientId LoginFailed )
 
-        UpdateCharacter character ->
+        UpdatePlayer character ->
             case List.find (\a -> a.loggedIn == Just clientId) model.accounts of
                 Just account ->
                     ( { model
@@ -92,7 +92,7 @@ updateFromFrontend sessionId clientId msg model =
                     , model.accounts
                         |> List.filterMap .loggedIn
                         |> List.filter (\id -> id /= clientId)
-                        |> List.map (\id -> Lamdera.sendToFrontend id (UpdateOtherCharacter account.username character))
+                        |> List.map (\id -> Lamdera.sendToFrontend id (UpdateOtherPlayer account.username character))
                         |> Cmd.batch
                     )
 

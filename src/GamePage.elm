@@ -11,13 +11,13 @@ import World
 init : Account -> ( Playground.Game Memory, Cmd Playground.Msg )
 init account =
     game.init
-        |> Tuple.mapFirst (Playground.edit (\_ memory -> { memory | character = account.character }))
+        |> Tuple.mapFirst (Playground.edit (\_ memory -> { memory | player = account.character }))
 
 
 game =
     Playground.embed render
         updateGame
-        { character =
+        { player =
             { coords = ( 0, 0 )
             , direction = Down
             , moving = False
@@ -28,15 +28,15 @@ game =
 
 
 render : Computer -> Memory -> List Shape
-render computer { character, others } =
+render computer { player, others } =
     World.render
-        ++ ((character :: Dict.values others)
+        ++ ((player :: Dict.values others)
                 |> List.map (Character.render computer.time)
            )
         |> List.map
-            (Playground.scale 3 >> Playground.move (negate (Tuple.first character.coords)) (negate (Tuple.second character.coords)))
+            (Playground.scale 3 >> Playground.move (negate (Tuple.first player.coords)) (negate (Tuple.second player.coords)))
 
 
 updateGame : Computer -> Memory -> Memory
 updateGame computer memory =
-    { memory | character = Character.update computer memory.character }
+    { memory | player = Character.update computer memory.player }

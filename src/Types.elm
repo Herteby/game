@@ -20,7 +20,7 @@ type Page
 
 
 type alias Memory =
-    { character : Character
+    { player : Character
     , others : Dict String Character
     }
 
@@ -50,7 +50,7 @@ type FrontendMsg
 type ToBackend
     = CreateAccount String Hash Int
     | Login String Hash
-    | UpdateCharacter Character
+    | UpdatePlayer Character
 
 
 type BackendMsg
@@ -61,7 +61,7 @@ type ToFrontend
     = LoggedIn Account
     | LoginFailed
     | RegisterFailed
-    | UpdateOtherCharacter String Character
+    | UpdateOtherPlayer String Character
 
 
 type alias RegisterModel =

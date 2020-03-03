@@ -75,8 +75,8 @@ update msg model =
                                 Playground.get submodel |> Tuple.second
 
                             cmd_ =
-                                if newMemory.character /= oldMemory.character then
-                                    Lamdera.sendToBackend (UpdateCharacter newMemory.character)
+                                if newMemory.player /= oldMemory.player then
+                                    Lamdera.sendToBackend (UpdatePlayer newMemory.player)
 
                                 else
                                     Cmd.none
@@ -105,44 +105,32 @@ with msg page model =
 -}
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
-    case msg of
-        LoggedIn account ->
+    case ( msg, model.page ) of
+        ( LoggedIn account, _ ) ->
             GamePage.init account
                 |> with GameMsg GamePage model
 
-        LoginFailed ->
-            case model.page of
-                LoginPage loginModel ->
-                    ( { page = LoginPage { loginModel | failed = True } }, Cmd.none )
+        ( LoginFailed, LoginPage loginModel ) ->
+            ( { page = LoginPage { loginModel | failed = True } }, Cmd.none )
 
-                _ ->
-                    ( model, Cmd.none )
+        ( RegisterFailed, RegisterPage registerModel ) ->
+            ( { page = RegisterPage { registerModel | failed = True } }, Cmd.none )
 
-        RegisterFailed ->
-            case model.page of
-                RegisterPage registerModel ->
-                    ( { page = RegisterPage { registerModel | failed = True } }, Cmd.none )
+        ( UpdateOtherPlayer username character, GamePage game ) ->
+            ( { model
+                | page =
+                    GamePage <|
+                        Playground.edit
+                            (\_ memory ->
+                                { memory | others = Dict.insert username character memory.others }
+                            )
+                            game
+              }
+            , Cmd.none
+            )
 
-                _ ->
-                    ( model, Cmd.none )
-
-        UpdateOtherCharacter username character ->
-            case model.page of
-                GamePage game ->
-                    ( { model
-                        | page =
-                            GamePage <|
-                                Playground.edit
-                                    (\_ memory ->
-                                        { memory | others = Dict.insert username character memory.others }
-                                    )
-                                    game
-                      }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+        _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Html FrontendMsg

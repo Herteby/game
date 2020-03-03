@@ -13,10 +13,10 @@ permTable =
 
 world : List (List Float)
 world =
-    List.range 0 100
+    List.range 0 200
         |> List.map
             (\x ->
-                List.range 0 100
+                List.range 0 200
                     |> List.map
                         (\y ->
                             fractal2d standard permTable (toFloat x / 10) (toFloat y / 10)
@@ -26,10 +26,7 @@ world =
 
 image =
     Image.fromList2d (List.map (List.map (\f -> ((f + 1) * 4) + 1 |> round)) world)
-
-
-imageUrl =
-    Image.toPngUrl image
+        |> Image.toPngUrl
 
 
 size =
@@ -37,8 +34,7 @@ size =
 
 
 render =
-    [ Playground.tilemap 16 16 "/ground.png" imageUrl
-        |> Playground.scale 3
+    [ Playground.tilemap 16 16 "/ground.png" image
     ]
 
 

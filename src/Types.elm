@@ -2,53 +2,55 @@ module Types exposing (..)
 
 import Character exposing (Character)
 import Dict exposing (Dict)
+import Hash exposing (Hash)
 import Lamdera exposing (ClientId)
 import Playground
 
 
 type alias FrontendModel =
-    { messages : List ChatMsg
-    , messageFieldContent : String
-    , game : Playground.Game Memory
+    { page : Page
     }
+
+
+type Page
+    = StartPage
+    | LoginPage LoginModel
+    | RegisterPage RegisterModel
+    | GamePage (Playground.Game Memory)
 
 
 type alias Memory =
     { character : Character
+    , others : Dict String Character
     }
 
 
 type alias BackendModel =
-    { messages : List Message
-    , clients : Dict ClientId ClientStatus
-    , accounts : List Account
+    { accounts : List Account
     }
-
-
-type ClientStatus
-    = LoggedIn Account
-    | NotLoggedIn
 
 
 type alias Account =
     { username : String
-    , passwordHash : String
+    , passwordHash : Hash
+    , character : Character
+    , loggedIn : Maybe ClientId
     }
 
 
 type FrontendMsg
-    = MessageFieldChanged String
-    | MessageSubmitted
+    = LoginMsg LoginMsg
+    | RegisterMsg RegisterMsg
     | GameMsg Playground.Msg
-    | SelectedCharacter Int
+    | GotoLogin
+    | GotoRegister
     | Noop
 
 
 type ToBackend
-    = ClientJoin
-    | MsgSubmitted String
-    | CreateAccount Account
-    | Login Account
+    = CreateAccount String Hash Int
+    | Login String Hash
+    | UpdateCharacter Character
 
 
 type BackendMsg
@@ -56,16 +58,33 @@ type BackendMsg
 
 
 type ToFrontend
-    = ClientJoinReceived ClientId
-    | ClientTimeoutReceived ClientId
-    | RoomMsgReceived Message
+    = LoggedIn Account
+    | UpdateOtherCharacter String Character
 
 
-type alias Message =
-    ( String, String )
+type alias RegisterModel =
+    { username : String
+    , password : String
+    , password2 : String
+    , character : Maybe Int
+    }
 
 
-type ChatMsg
-    = ClientJoined ClientId
-    | ClientTimedOut ClientId
-    | MsgReceived ClientId String
+type RegisterMsg
+    = InputUsername String
+    | InputPassword String
+    | InputPassword2 String
+    | SelectedCharacter Int
+    | Register
+
+
+type alias LoginModel =
+    { username : String
+    , password : String
+    }
+
+
+type LoginMsg
+    = LoginUsername String
+    | LoginPassword String
+    | Submit

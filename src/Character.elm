@@ -13,6 +13,15 @@ type alias Character =
     }
 
 
+create : Int -> Maybe Character
+create variant =
+    if variant > 0 && variant <= 40 then
+        Just { coords = ( 0, 0 ), direction = Down, moving = False, variant = variant }
+
+    else
+        Nothing
+
+
 type Direction
     = Up
     | Down
@@ -102,6 +111,7 @@ render time char =
                 row + 1
     in
     tile char.variant frame
+        |> Playground.move (Tuple.first char.coords) (Tuple.second char.coords)
 
 
 speed =

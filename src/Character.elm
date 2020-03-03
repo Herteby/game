@@ -1,7 +1,8 @@
 module Character exposing (..)
 
-import Playground
+import Playground exposing (Keyboard)
 import Playground.Extra as Playground
+import Set
 
 
 type alias Character =
@@ -24,30 +25,33 @@ update { keyboard, time } character =
         ( x, y ) =
             character.coords
 
+        ( vx, vy ) =
+            toXY keyboard
+
         d =
             Playground.delta time |> toFloat |> clamp 0 60
     in
     { character
         | coords =
-            ( x + (Playground.toX keyboard * speed * d)
-            , y + (Playground.toY keyboard * speed * d)
+            ( x + (vx * speed * d)
+            , y + (vy * speed * d)
             )
         , direction =
-            if keyboard.up then
+            if vy > 0 then
                 Up
 
-            else if keyboard.down then
+            else if vy < 0 then
                 Down
 
-            else if keyboard.left then
+            else if vx < 0 then
                 Left
 
-            else if keyboard.right then
+            else if vx > 0 then
                 Right
 
             else
                 character.direction
-        , moving = Playground.toXY keyboard /= ( 0, 0 )
+        , moving = toXY keyboard /= ( 0, 0 )
     }
 
 
@@ -102,3 +106,46 @@ render time char =
 
 speed =
     0.2
+
+
+toXY : Keyboard -> ( Float, Float )
+toXY keyboard =
+    let
+        x =
+            (if keyboard.right || Set.member "d" keyboard.keys then
+                1
+
+             else
+                0
+            )
+                - (if keyboard.left || Set.member "a" keyboard.keys then
+                    1
+
+                   else
+                    0
+                  )
+
+        y =
+            (if keyboard.up || Set.member "w" keyboard.keys then
+                1
+
+             else
+                0
+            )
+                - (if keyboard.down || Set.member "s" keyboard.keys then
+                    1
+
+                   else
+                    0
+                  )
+    in
+    if x /= 0 && y /= 0 then
+        ( x / squareRootOfTwo, y / squareRootOfTwo )
+
+    else
+        ( x, y )
+
+
+squareRootOfTwo : Float
+squareRootOfTwo =
+    sqrt 2

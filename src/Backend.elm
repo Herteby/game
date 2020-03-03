@@ -1,4 +1,4 @@
-module Backend exposing (Model, app)
+module Backend exposing (app)
 
 import Character
 import Dict
@@ -16,11 +16,7 @@ app =
         }
 
 
-type alias Model =
-    BackendModel
-
-
-init : ( Model, Cmd BackendMsg )
+init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { accounts = []
       }
@@ -28,19 +24,19 @@ init =
     )
 
 
-update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
+update : BackendMsg -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 update msg model =
     case msg of
         BNoop ->
             ( model, Cmd.none )
 
 
-updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
+updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     case msg of
         CreateAccount username passwordHash variant ->
             if List.any (\a -> a.username == username) model.accounts then
-                ( model, Lamdera.sendToFrontend clientId RegisterFailed )
+                ( model, Lamdera.sendToFrontend clientId UsernameAlreadyExists )
 
             else
                 case Character.create variant of
@@ -102,7 +98,7 @@ updateFromFrontend sessionId clientId msg model =
                     )
 
                 Nothing ->
-                    ( model, Lamdera.sendToFrontend clientId LoginFailed )
+                    ( model, Lamdera.sendToFrontend clientId WrongUsernameOrPassword )
 
         UpdatePlayer character ->
             case List.find (\a -> a.loggedIn == Just clientId) model.accounts of

@@ -110,10 +110,10 @@ updateFromBackend msg model =
             GamePage.init account others
                 |> with GameMsg GamePage model
 
-        ( LoginFailed, LoginPage loginModel ) ->
+        ( WrongUsernameOrPassword, LoginPage loginModel ) ->
             ( { page = LoginPage { loginModel | failed = True } }, Cmd.none )
 
-        ( RegisterFailed, RegisterPage registerModel ) ->
+        ( UsernameAlreadyExists, RegisterPage registerModel ) ->
             ( { page = RegisterPage { registerModel | failed = True } }, Cmd.none )
 
         ( UpdateOtherPlayer username character, GamePage game ) ->

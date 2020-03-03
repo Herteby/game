@@ -9,21 +9,14 @@ import Lamdera
 import Types exposing (..)
 
 
-type alias Model =
-    RegisterModel
-
-
-type alias Msg =
-    RegisterMsg
-
-
-init : Model
+init : RegisterModel
 init =
     { username = ""
     , password = ""
     , password2 = ""
     , character = Nothing
     , failed = False
+    , blurred = False
     }
 
 
@@ -40,6 +33,9 @@ update msg model =
 
         SelectedCharacter int ->
             ( { model | character = Just int }, Cmd.none )
+
+        Blurred ->
+            ( { model | blurred = True }, Cmd.none )
 
         Register ->
             case
@@ -85,11 +81,17 @@ view model =
                 [ text "Repeat password"
                 , input
                     [ onInput InputPassword2
+                    , onBlur Blurred
                     , value model.password2
                     , type_ "password"
                     ]
                     []
                 ]
+            , if model.blurred && model.password2 /= model.password then
+                text "The passwords don't match"
+
+              else
+                text "The password should be at least 7 characters"
             ]
         , characterPicker model.character
         , button [ onClick Register ] [ text "Register" ]

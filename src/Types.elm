@@ -59,8 +59,8 @@ type BackendMsg
 
 type ToFrontend
     = LoggedIn Account (Dict String Character)
-    | LoginFailed
-    | RegisterFailed
+    | WrongUsernameOrPassword
+    | UsernameAlreadyExists
     | UpdateOtherPlayer String Character
 
 
@@ -70,6 +70,7 @@ type alias RegisterModel =
     , password2 : String
     , character : Maybe Int
     , failed : Bool
+    , blurred : Bool
     }
 
 
@@ -77,6 +78,7 @@ type RegisterMsg
     = InputUsername String
     | InputPassword String
     | InputPassword2 String
+    | Blurred
     | SelectedCharacter Int
     | Register
 

@@ -38,6 +38,7 @@ render : Computer -> Memory -> List Shape
 render computer { player, others } =
     World.render
         ++ ((player :: Dict.values others)
+                |> List.sortBy (.coords >> Tuple.second >> negate)
                 |> List.map (Character.render computer.time)
            )
         |> List.map

@@ -52,11 +52,23 @@ updateFromFrontend sessionId clientId msg model =
                                 , character = character
                                 , loggedIn = Just clientId
                                 }
+
+                            others =
+                                model.accounts
+                                    |> List.filterMap
+                                        (\a ->
+                                            if a.loggedIn == Nothing then
+                                                Nothing
+
+                                            else
+                                                Just ( a.username, a.character )
+                                        )
+                                    |> Dict.fromList
                         in
                         ( { model
                             | accounts = account :: model.accounts
                           }
-                        , Lamdera.sendToFrontend clientId (LoggedIn account)
+                        , Lamdera.sendToFrontend clientId (LoggedIn account others)
                         )
 
                     Nothing ->
@@ -72,9 +84,21 @@ updateFromFrontend sessionId clientId msg model =
                     let
                         account_ =
                             { account | loggedIn = Just clientId }
+
+                        others =
+                            model.accounts
+                                |> List.filterMap
+                                    (\a ->
+                                        if a.loggedIn == Nothing || a.username == account.username then
+                                            Nothing
+
+                                        else
+                                            Just ( a.username, a.character )
+                                    )
+                                |> Dict.fromList
                     in
                     ( { model | accounts = List.setIf match account_ model.accounts }
-                    , Lamdera.sendToFrontend clientId (LoggedIn account_)
+                    , Lamdera.sendToFrontend clientId (LoggedIn account_ others)
                     )
 
                 Nothing ->

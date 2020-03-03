@@ -1,17 +1,24 @@
 module GamePage exposing (..)
 
 import Character exposing (Character, Direction(..))
-import Dict
+import Dict exposing (Dict)
 import Playground exposing (Computer, Shape)
 import Playground.Advanced as Playground
 import Types exposing (..)
 import World
 
 
-init : Account -> ( Playground.Game Memory, Cmd Playground.Msg )
-init account =
+init : Account -> Dict String Character -> ( Playground.Game Memory, Cmd Playground.Msg )
+init account others =
     game.init
-        |> Tuple.mapFirst (Playground.edit (\_ memory -> { memory | player = account.character }))
+        |> Tuple.mapFirst
+            (Playground.edit
+                (\_ _ ->
+                    { player = account.character
+                    , others = others
+                    }
+                )
+            )
 
 
 game =

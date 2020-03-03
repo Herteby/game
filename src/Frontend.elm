@@ -106,8 +106,8 @@ with msg page model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case ( msg, model.page ) of
-        ( LoggedIn account, _ ) ->
-            GamePage.init account
+        ( LoggedIn account others, _ ) ->
+            GamePage.init account others
                 |> with GameMsg GamePage model
 
         ( LoginFailed, LoginPage loginModel ) ->

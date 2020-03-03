@@ -58,7 +58,7 @@ type BackendMsg
 
 
 type ToFrontend
-    = LoggedIn Account
+    = LoggedIn Account (Dict String Character)
     | LoginFailed
     | RegisterFailed
     | UpdateOtherPlayer String Character

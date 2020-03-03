@@ -8,5 +8,5 @@ type Hash
 
 
 fromString : String -> Hash
-fromString =
-    Sha256.sha256 >> Hash
+fromString str =
+    Hash <| Sha256.sha256 (str ++ "salty sea dogs!")

@@ -47,7 +47,7 @@ update { keyboard, time } character =
 
             else
                 character.direction
-        , moving = keyboard.up || keyboard.down || keyboard.left || keyboard.right
+        , moving = Playground.toXY keyboard /= ( 0, 0 )
     }
 
 

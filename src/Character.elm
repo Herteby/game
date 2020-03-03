@@ -25,7 +25,7 @@ update { keyboard, time } character =
             character.coords
 
         d =
-            Playground.delta time |> toFloat
+            Playground.delta time |> toFloat |> clamp 0 60
     in
     { character
         | coords =

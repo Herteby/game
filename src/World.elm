@@ -37,8 +37,8 @@ size =
 
 
 render =
-    [ Playground.tilemap 1 1 "/greyscale.png" imageUrl
-        |> Playground.scale 10
+    [ Playground.tilemap 16 16 "/ground.png" imageUrl
+        |> Playground.scale 3
     ]
 
 
@@ -50,7 +50,7 @@ type alias FractalConfig =
 
 standard : FractalConfig
 standard =
-    { steps = 4
+    { steps = 2
     , persistence = 2
     }
 

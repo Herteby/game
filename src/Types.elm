@@ -1,7 +1,7 @@
 module Types exposing (..)
 
-import AssocList as Assoc
 import Character exposing (Character)
+import Dict exposing (Dict)
 import Lamdera exposing (ClientId)
 import Playground
 
@@ -20,7 +20,7 @@ type alias Memory =
 
 type alias BackendModel =
     { messages : List Message
-    , clients : Assoc.Dict ClientId ClientStatus
+    , clients : Dict ClientId ClientStatus
     , accounts : List Account
     }
 

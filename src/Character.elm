@@ -51,58 +51,53 @@ update { keyboard, time } character =
     }
 
 
+url : Int -> String
 url variant =
     "/characters/" ++ String.fromInt variant ++ ".png"
 
 
+tile : Int -> Int -> Playground.Shape
 tile variant =
     Playground.tile 26 36 (url variant)
 
 
-anim time a =
+render : Playground.Time -> Character -> Playground.Shape
+render time char =
     let
         mod =
             Playground.now time |> modBy 500
+
+        row =
+            case char.direction of
+                Down ->
+                    0
+
+                Left ->
+                    3
+
+                Right ->
+                    6
+
+                Up ->
+                    9
+
+        frame =
+            if not char.moving then
+                row + 1
+
+            else if mod < 125 then
+                row
+
+            else if mod < 250 then
+                row + 1
+
+            else if mod < 375 then
+                row + 2
+
+            else
+                row + 1
     in
-    if mod < 125 then
-        a
-
-    else if mod < 250 then
-        a + 1
-
-    else if mod < 375 then
-        a + 2
-
-    else
-        a + 1
-
-
-render time char =
-    tile char.variant <|
-        case ( char.direction, char.moving ) of
-            ( Down, False ) ->
-                1
-
-            ( Down, True ) ->
-                anim time 0
-
-            ( Left, False ) ->
-                4
-
-            ( Left, True ) ->
-                anim time 3
-
-            ( Right, False ) ->
-                7
-
-            ( Right, True ) ->
-                anim time 6
-
-            ( Up, False ) ->
-                10
-
-            ( Up, True ) ->
-                anim time 9
+    tile char.variant frame
 
 
 speed =

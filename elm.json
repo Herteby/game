@@ -7,6 +7,7 @@
     "dependencies": {
         "direct": {
             "Herteby/simplex-noise": "1.0.0",
+            "Punie/elm-matrix": "2.0.0",
             "avh4/elm-color": "1.0.0",
             "billstclair/elm-sha256": "1.0.9",
             "elm/browser": "1.0.2",
@@ -16,6 +17,7 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.2.3",
+            "elm-community/maybe-extra": "5.1.0",
             "elm-explorations/linear-algebra": "1.0.3",
             "elm-explorations/webgl": "1.1.1",
             "justgook/elm-image": "4.0.0",

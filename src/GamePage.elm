@@ -42,7 +42,14 @@ render computer { player, others } =
                 |> List.map (Character.render computer.time)
            )
         |> List.map
-            (Playground.scale 3 >> Playground.move (negate (Tuple.first player.coords)) (negate (Tuple.second player.coords)))
+            ((if True || computer.keyboard.space then
+                identity
+
+              else
+                Playground.scale 3
+             )
+                >> Playground.move (negate (Tuple.first player.coords)) (negate (Tuple.second player.coords))
+            )
 
 
 updateGame : Computer -> Memory -> Memory

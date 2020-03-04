@@ -1,8 +1,10 @@
 module Frontend exposing (Model, app)
 
+import Character
 import Css
 import Dict
 import GamePage
+import Hash
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -46,9 +48,34 @@ type alias Model =
 
 init : ( Model, Cmd FrontendMsg )
 init =
-    ( { page = StartPage }
-    , Cmd.none
-    )
+    if True then
+        devInit
+
+    else
+        ( { page = StartPage }
+        , Cmd.none
+        )
+
+
+devInit : ( Model, Cmd FrontendMsg )
+devInit =
+    case Character.create 5 of
+        Just char ->
+            updateFromBackend
+                (LoggedIn
+                    { username = ""
+                    , loggedIn = Nothing
+                    , passwordHash = Hash.fromString ""
+                    , character = char
+                    }
+                    Dict.empty
+                )
+                { page = StartPage }
+
+        Nothing ->
+            ( { page = StartPage }
+            , Cmd.none
+            )
 
 
 {-| This is the normal frontend update function. It handles all messages that can occur on the frontend.

@@ -42,7 +42,7 @@ render computer { player, others } =
                 |> List.map (Character.render computer.time)
            )
         |> List.map
-            ((if True || computer.keyboard.space then
+            ((if computer.keyboard.space then
                 identity
 
               else

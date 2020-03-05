@@ -1,4 +1,4 @@
-module Evergreen.Type.V28 exposing (..)
+module Evergreen.Type.V1 exposing (..)
 
 import Character exposing (Character)
 import Dict exposing (Dict)

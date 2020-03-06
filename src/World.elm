@@ -57,6 +57,9 @@ terrainFromValues { height, temp, humidity, random } =
     ( if height > 0.2 then
         Grass
 
+      else if height > 0.15 then
+        Dirt
+
       else if height > 0 then
         Beach
 
@@ -94,6 +97,7 @@ image t =
                     t
                         == t2
                         || (t == Beach && t2 /= Water)
+                        || (t == Dirt && t2 == Grass)
                 )
                 world
     in
@@ -142,8 +146,8 @@ image t =
 render =
     [ texture Water (image Water)
     , texture Beach (image Beach)
-    , texture Grass (image Grass)
     , texture Dirt (image Dirt)
+    , texture Grass (image Grass)
     ]
 
 

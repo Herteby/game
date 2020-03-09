@@ -48,7 +48,7 @@ type alias Model =
 
 init : ( Model, Cmd FrontendMsg )
 init =
-    if True then
+    if False then
         devInit
 
     else

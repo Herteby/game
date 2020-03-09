@@ -9,17 +9,22 @@ type alias Character =
     { coords : ( Float, Float )
     , direction : Direction
     , moving : Bool
-    , variant : Int
+    , skin : Int
     }
 
 
 create : Int -> Maybe Character
-create variant =
-    if variant > 0 && variant <= 40 then
-        Just { coords = ( 0, 0 ), direction = Down, moving = False, variant = variant }
+create skin =
+    if List.member skin skinList then
+        Just { coords = ( 0, 0 ), direction = Down, moving = False, skin = skin }
 
     else
         Nothing
+
+
+skinList : List Int
+skinList =
+    List.range 1 40
 
 
 type Direction
@@ -65,13 +70,13 @@ update { keyboard, time } character =
 
 
 url : Int -> String
-url variant =
-    "/characters/" ++ String.fromInt variant ++ ".png"
+url skin =
+    "/characters/" ++ String.fromInt skin ++ ".png"
 
 
 tile : Int -> Int -> Playground.Shape
-tile variant =
-    Playground.tile 26 36 (url variant)
+tile skin =
+    Playground.tile 26 36 (url skin)
 
 
 render : Playground.Time -> Character -> Playground.Shape
@@ -110,7 +115,7 @@ render time char =
             else
                 row + 1
     in
-    tile char.variant frame
+    tile char.skin frame
         |> Playground.move (Tuple.first char.coords) (Tuple.second char.coords)
 
 

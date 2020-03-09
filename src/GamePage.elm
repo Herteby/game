@@ -16,6 +16,7 @@ init account others =
                 (\_ _ ->
                     { player = account.character
                     , others = others
+                    , chunks = Dict.empty
                     }
                 )
             )
@@ -28,28 +29,47 @@ game =
             { coords = ( 0, 0 )
             , direction = Down
             , moving = False
-            , variant = 1
+            , skin = 1
             }
         , others = Dict.empty
+        , chunks = Dict.empty
         }
 
 
 render : Computer -> Memory -> List Shape
-render computer { player, others } =
-    World.render
+render computer { player, others, chunks } =
+    let
+        terrain =
+            chunks
+                |> Dict.toList
+                |> List.concatMap
+                    (\( ( x, y ), chunk ) ->
+                        case chunk of
+                            Pending ->
+                                []
+
+                            Received chunk_ ->
+                                [ World.render chunk_
+                                    |> Playground.move
+                                        (toFloat x * 64 * 16)
+                                        (toFloat y * 64 * 16)
+                                ]
+                    )
+    in
+    [ List.map (Playground.scale 0.5) terrain
         ++ ((player :: Dict.values others)
                 |> List.sortBy (.coords >> Tuple.second >> negate)
                 |> List.map (Character.render computer.time)
            )
-        |> List.map
-            ((if computer.keyboard.space then
-                identity
+        |> Playground.group
+        |> (if computer.keyboard.space then
+                Playground.move (negate (Tuple.first player.coords)) (negate (Tuple.second player.coords))
 
-              else
+            else
                 Playground.scale 3
-             )
-                >> Playground.move (negate (Tuple.first player.coords)) (negate (Tuple.second player.coords))
-            )
+                    >> Playground.move (negate (Tuple.first player.coords) * 3) (negate (Tuple.second player.coords) * 3)
+           )
+    ]
 
 
 updateGame : Computer -> Memory -> Memory

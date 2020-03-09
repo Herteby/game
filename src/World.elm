@@ -8,11 +8,57 @@ import Playground.Extra as Playground
 import Simplex exposing (PermutationTable)
 
 
+type alias Chunk =
+    { textures : List ( Terrain, String )
+    }
+
+
+type Object
+    = Object
+
+
+generateChunk : Int -> Int -> Chunk
+generateChunk x y =
+    let
+        matrix =
+            List.range (x * 64) (x * 64 + 66)
+                |> List.map
+                    (\x_ ->
+                        List.range (y * 64) (y * 64 + 66)
+                            |> List.map
+                                (\y_ ->
+                                    valuesFromCoord x_ y_
+                                        |> terrainFromValues
+                                )
+                    )
+                |> Matrix.fromLists
+                |> Maybe.withDefault Matrix.empty
+
+        _ =
+            Debug.log "size" (Matrix.size matrix)
+    in
+    { textures =
+        [ ( Water, image matrix Water )
+        , ( Beach, image matrix Beach )
+        , ( Dirt, image matrix Dirt )
+        , ( Grass, image matrix Grass )
+        ]
+    }
+
+
+render : Chunk -> Playground.Shape
+render chunk =
+    chunk.textures
+        |> List.map (\( terrain, img ) -> texture terrain img)
+        |> Playground.group
+
+
 permTable : PermutationTable
 permTable =
     Simplex.permutationTableFromInt 42
 
 
+texture : Terrain -> String -> Playground.Shape
 texture t =
     let
         str =
@@ -69,27 +115,8 @@ terrainFromValues { height, temp, humidity, random } =
     )
 
 
-worldFloat : Matrix { height : Float, temp : Float, humidity : Float, random : Float }
-worldFloat =
-    List.range 0 66
-        |> List.map
-            (\x ->
-                List.range 0 66
-                    |> List.map
-                        (\y ->
-                            valuesFromCoord x y
-                        )
-            )
-        |> Matrix.fromLists
-        |> Maybe.withDefault Matrix.empty
-
-
-world : Matrix ( Terrain, Float )
-world =
-    Matrix.map terrainFromValues worldFloat
-
-
-image t =
+image : Matrix ( Terrain, Float ) -> Terrain -> String
+image matrix t =
     let
         bools =
             Matrix.map
@@ -99,23 +126,26 @@ image t =
                         || (t == Beach && t2 /= Water)
                         || (t == Dirt && t2 == Grass)
                 )
-                world
+                matrix
+
+        _ =
+            Debug.log "bools" (Matrix.size bools)
     in
-    List.range 1 64
+    List.range 2 65
         |> List.reverse
         |> List.map
-            (\y ->
-                List.range 1 65
+            (\y_ ->
+                List.range 2 65
                     |> List.map
-                        (\x ->
-                            case getNeighbors x y bools of
+                        (\x_ ->
+                            case getNeighbors x_ y_ bools of
                                 Just n ->
                                     let
                                         tile =
                                             edges n
                                     in
                                     if tile == 11 then
-                                        case Matrix.get x y world of
+                                        case Matrix.get x_ y_ matrix of
                                             Just ( _, random ) ->
                                                 if random < 0 then
                                                     11
@@ -136,19 +166,16 @@ image t =
                                         tile
 
                                 Nothing ->
+                                    {- let
+                                           _ =
+                                               Debug.log "ERROR" ( x_, y_ )
+                                       in
+                                    -}
                                     0
                         )
             )
         |> Image.fromList2d
         |> Image.toPngUrl
-
-
-render =
-    [ texture Water (image Water)
-    , texture Beach (image Beach)
-    , texture Dirt (image Dirt)
-    , texture Grass (image Grass)
-    ]
 
 
 edges : Neighbors Bool -> Int

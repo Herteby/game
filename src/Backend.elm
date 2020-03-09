@@ -5,6 +5,7 @@ import Dict
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra as List
 import Types exposing (..)
+import World
 
 
 app =
@@ -19,6 +20,7 @@ app =
 init : ( BackendModel, Cmd BackendMsg )
 init =
     ( { accounts = []
+      , chunks = Dict.empty
       }
     , Cmd.none
     )
@@ -34,12 +36,12 @@ update msg model =
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> BackendModel -> ( BackendModel, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     case msg of
-        CreateAccount username passwordHash variant ->
+        CreateAccount username passwordHash skin ->
             if List.any (\a -> a.username == username) model.accounts then
                 ( model, Lamdera.sendToFrontend clientId UsernameAlreadyExists )
 
             else
-                case Character.create variant of
+                case Character.create skin of
                     Just character ->
                         let
                             account =
@@ -118,3 +120,24 @@ updateFromFrontend sessionId clientId msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        CheckName username ->
+            let
+                exists =
+                    List.any (\a -> a.username == username) model.accounts
+            in
+            ( model, Lamdera.sendToFrontend clientId (CheckNameResponse exists) )
+
+        GetChunk x y ->
+            case Dict.get ( x, y ) model.chunks of
+                Just chunk ->
+                    ( model, Lamdera.sendToFrontend clientId (ChunkResponse x y chunk) )
+
+                Nothing ->
+                    let
+                        chunk =
+                            World.generateChunk x y
+                    in
+                    ( { model | chunks = Dict.insert ( x, y ) chunk model.chunks }
+                    , Lamdera.sendToFrontend clientId (ChunkResponse x y chunk)
+                    )

@@ -8,6 +8,7 @@
         "direct": {
             "Herteby/simplex-noise": "1.0.0",
             "Punie/elm-matrix": "2.0.0",
+            "SiriusStarr/elm-password-strength": "1.0.1",
             "avh4/elm-color": "1.0.0",
             "billstclair/elm-sha256": "1.0.9",
             "elm/browser": "1.0.2",
@@ -29,9 +30,11 @@
         "indirect": {
             "danfishgold/base64-bytes": "1.0.3",
             "elm/bytes": "1.0.8",
+            "elm/parser": "1.1.0",
             "elm/random": "1.0.0",
             "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.2",
+            "elm-community/dict-extra": "2.4.0",
             "elm-community/random-extra": "3.1.0",
             "folkertdev/elm-flate": "2.0.3",
             "owanturist/elm-union-find": "1.0.0"

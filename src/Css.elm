@@ -25,6 +25,18 @@ button {
     border-radius:5px;
     cursor:pointer;
     padding:5px 15px;
+    font-size:16px;
+}
+
+button.disabled {
+    background:#666;
+    color:#888;
+    pointer-events:none;
+}
+
+button.big {
+    font-size:32px;
+    margin-top:20px;
 }
 
 .main {
@@ -40,10 +52,7 @@ button {
     flex-direction:column;
 }
 
-.startPage button {
-    font-size:32px;
-    margin-bottom:20px;
-}
+
 
 .form {
     display:flex;

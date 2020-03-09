@@ -48,7 +48,7 @@ type alias Model =
 
 init : ( Model, Cmd FrontendMsg )
 init =
-    if False then
+    if True then
         devInit
 
     else
@@ -109,7 +109,25 @@ update msg model =
                                     Cmd.none
                         in
                         ( { page = GamePage newmodel }
-                        , Cmd.batch [ Cmd.map GameMsg cmd, cmd_ ]
+                        , Cmd.batch
+                            [ Cmd.map GameMsg cmd
+                            , cmd_
+                            , if Dict.isEmpty newMemory.chunks then
+                                Cmd.batch
+                                    [ Lamdera.sendToBackend (GetChunk 0 0)
+                                    , Lamdera.sendToBackend (GetChunk 0 1)
+                                    , Lamdera.sendToBackend (GetChunk 1 1)
+                                    , Lamdera.sendToBackend (GetChunk 1 0)
+                                    , Lamdera.sendToBackend (GetChunk -1 0)
+                                    , Lamdera.sendToBackend (GetChunk 0 -1)
+                                    , Lamdera.sendToBackend (GetChunk -1 -1)
+                                    , Lamdera.sendToBackend (GetChunk 1 -1)
+                                    , Lamdera.sendToBackend (GetChunk -1 1)
+                                    ]
+
+                              else
+                                Cmd.none
+                            ]
                         )
                    )
 
@@ -140,6 +158,13 @@ updateFromBackend msg model =
         ( WrongUsernameOrPassword, LoginPage loginModel ) ->
             ( { page = LoginPage { loginModel | failed = True } }, Cmd.none )
 
+        ( CheckNameResponse exists, RegisterPage registerModel ) ->
+            if exists then
+                ( { page = RegisterPage { registerModel | failed = True } }, Cmd.none )
+
+            else
+                ( { page = RegisterPage { registerModel | characterPicker = True } }, Cmd.none )
+
         ( UsernameAlreadyExists, RegisterPage registerModel ) ->
             ( { page = RegisterPage { registerModel | failed = True } }, Cmd.none )
 
@@ -150,6 +175,19 @@ updateFromBackend msg model =
                         Playground.edit
                             (\_ memory ->
                                 { memory | others = Dict.insert username character memory.others }
+                            )
+                            game
+              }
+            , Cmd.none
+            )
+
+        ( ChunkResponse x y chunk, GamePage game ) ->
+            ( { model
+                | page =
+                    GamePage <|
+                        Playground.edit
+                            (\_ memory ->
+                                { memory | chunks = Dict.insert ( x, y ) (Received chunk) memory.chunks }
                             )
                             game
               }
@@ -181,6 +219,6 @@ view model =
 
 startView =
     div [ class "startPage" ]
-        [ button [ onClick GotoLogin ] [ text "Log in" ]
-        , button [ onClick GotoRegister ] [ text "Register" ]
+        [ button [ onClick GotoLogin, class "big" ] [ text "Log in" ]
+        , button [ onClick GotoRegister, class "big" ] [ text "Register" ]
         ]

@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Hash exposing (Hash)
 import Lamdera exposing (ClientId)
 import Playground
+import World exposing (Chunk)
 
 
 type alias FrontendModel =
@@ -22,11 +23,18 @@ type Page
 type alias Memory =
     { player : Character
     , others : Dict String Character
+    , chunks : Dict ( Int, Int ) (Request Chunk)
     }
+
+
+type Request a
+    = Pending
+    | Received a
 
 
 type alias BackendModel =
     { accounts : List Account
+    , chunks : Dict ( Int, Int ) Chunk
     }
 
 
@@ -48,9 +56,11 @@ type FrontendMsg
 
 
 type ToBackend
-    = CreateAccount String Hash Int
+    = CheckName String
+    | CreateAccount String Hash Int
     | Login String Hash
     | UpdatePlayer Character
+    | GetChunk Int Int
 
 
 type BackendMsg
@@ -59,15 +69,18 @@ type BackendMsg
 
 type ToFrontend
     = LoggedIn Account (Dict String Character)
+    | CheckNameResponse Bool
     | WrongUsernameOrPassword
     | UsernameAlreadyExists
     | UpdateOtherPlayer String Character
+    | ChunkResponse Int Int Chunk
 
 
 type alias RegisterModel =
     { username : String
     , password : String
     , password2 : String
+    , characterPicker : Bool
     , character : Maybe Int
     , failed : Bool
     , blurred : Bool
@@ -79,6 +92,7 @@ type RegisterMsg
     | InputPassword String
     | InputPassword2 String
     | Blurred
+    | Next
     | SelectedCharacter Int
     | Register
 

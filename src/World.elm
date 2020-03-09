@@ -33,9 +33,6 @@ generateChunk x y =
                     )
                 |> Matrix.fromLists
                 |> Maybe.withDefault Matrix.empty
-
-        _ =
-            Debug.log "size" (Matrix.size matrix)
     in
     { textures =
         [ ( Water, image matrix Water )
@@ -51,6 +48,7 @@ render chunk =
     chunk.textures
         |> List.map (\( terrain, img ) -> texture terrain img)
         |> Playground.group
+        |> Playground.move (32 * 16) (32 * 16)
 
 
 permTable : PermutationTable
@@ -127,9 +125,6 @@ image matrix t =
                         || (t == Dirt && t2 == Grass)
                 )
                 matrix
-
-        _ =
-            Debug.log "bools" (Matrix.size bools)
     in
     List.range 2 65
         |> List.reverse
@@ -144,20 +139,27 @@ image matrix t =
                                         tile =
                                             edges n
                                     in
-                                    if tile == 11 then
+                                    if tile == 11 || tile == 1 then
                                         case Matrix.get x_ y_ matrix of
                                             Just ( _, random ) ->
-                                                if random < 0 then
-                                                    11
+                                                if tile == 11 then
+                                                    if random < 0 then
+                                                        11
 
-                                                else if random < 0.25 then
-                                                    16
+                                                    else if random < 0.25 then
+                                                        16
 
-                                                else if random < 0.5 then
-                                                    17
+                                                    else if random < 0.5 then
+                                                        17
+
+                                                    else
+                                                        18
+
+                                                else if random < 0 then
+                                                    1
 
                                                 else
-                                                    18
+                                                    4
 
                                             Nothing ->
                                                 tile
@@ -166,11 +168,6 @@ image matrix t =
                                         tile
 
                                 Nothing ->
-                                    {- let
-                                           _ =
-                                               Debug.log "ERROR" ( x_, y_ )
-                                       in
-                                    -}
                                     0
                         )
             )

@@ -101,6 +101,12 @@ update msg model =
                             oldMemory =
                                 Playground.get submodel |> Tuple.second
 
+                            ( cx, cy ) =
+                                newMemory.player.coords
+                                    |> (\( x, y ) ->
+                                            ( round <| x / (64 * 16), round <| y / (64 * 16) )
+                                       )
+
                             cmd_ =
                                 if newMemory.player /= oldMemory.player then
                                     Lamdera.sendToBackend (UpdatePlayer newMemory.player)
@@ -112,23 +118,12 @@ update msg model =
                         , Cmd.batch
                             [ Cmd.map GameMsg cmd
                             , cmd_
-                            , if Dict.isEmpty newMemory.chunks then
-                                Cmd.batch
-                                    [ Lamdera.sendToBackend (GetChunk 0 0)
-                                    , Lamdera.sendToBackend (GetChunk 0 1)
-                                    , Lamdera.sendToBackend (GetChunk 1 1)
-                                    , Lamdera.sendToBackend (GetChunk 1 0)
-                                    , Lamdera.sendToBackend (GetChunk -1 0)
-                                    , Lamdera.sendToBackend (GetChunk 0 -1)
-                                    , Lamdera.sendToBackend (GetChunk -1 -1)
-                                    , Lamdera.sendToBackend (GetChunk 1 -1)
-                                    , Lamdera.sendToBackend (GetChunk -1 1)
-                                    ]
-
-                              else
-                                Cmd.none
                             ]
                         )
+                            |> checkChunk cx cy
+                            |> checkChunk (cx - 1) cy
+                            |> checkChunk cx (cy - 1)
+                            |> checkChunk (cx - 1) (cy - 1)
                    )
 
         ( GotoLogin, _ ) ->
@@ -139,6 +134,25 @@ update msg model =
 
         _ ->
             ( model, Cmd.none )
+
+
+checkChunk x y ( model, cmd ) =
+    case model.page of
+        GamePage game ->
+            let
+                memory =
+                    Playground.get game |> Tuple.second
+            in
+            if Dict.get ( x, y ) memory.chunks == Nothing then
+                ( { page = GamePage (game |> Playground.edit (\_ _ -> { memory | chunks = Dict.insert ( x, y ) Pending memory.chunks })) }
+                , Cmd.batch [ cmd, Lamdera.sendToBackend (GetChunk x y) ]
+                )
+
+            else
+                ( model, cmd )
+
+        _ ->
+            ( model, cmd )
 
 
 with msg page model =

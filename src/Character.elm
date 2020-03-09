@@ -44,11 +44,18 @@ update { keyboard, time } character =
 
         d =
             Playground.delta time |> toFloat |> clamp 0 60
+
+        speed_ =
+            if keyboard.shift then
+                speed * 3
+
+            else
+                speed
     in
     { character
         | coords =
-            ( x + (vx * speed * d)
-            , y + (vy * speed * d)
+            ( x + (vx * speed_ * d)
+            , y + (vy * speed_ * d)
             )
         , direction =
             if vy > 0 then

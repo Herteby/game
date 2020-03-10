@@ -138,6 +138,32 @@ updateFromFrontend sessionId clientId msg model =
                         chunk =
                             World.generateChunk x y
                     in
-                    ( { model | chunks = Dict.insert ( x, y ) chunk model.chunks }
+                    ( if devMode then
+                        model
+
+                      else
+                        { model | chunks = Dict.insert ( x, y ) chunk model.chunks }
                     , Lamdera.sendToFrontend clientId (ChunkResponse x y chunk)
                     )
+
+        SendMessage message ->
+            ( model
+            , case List.find (\a -> a.loggedIn == Just clientId) model.accounts of
+                Just sender ->
+                    model.accounts
+                        |> List.filterMap .loggedIn
+                        |> List.map
+                            (\id ->
+                                Lamdera.sendToFrontend id
+                                    (GotMessage
+                                        { username = sender.username
+                                        , skin = sender.character.skin
+                                        , message = message
+                                        }
+                                    )
+                            )
+                        |> Cmd.batch
+
+                Nothing ->
+                    Cmd.none
+            )

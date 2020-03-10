@@ -1,5 +1,7 @@
 module Frontend exposing (Model, app)
 
+import Browser.Dom
+import Browser.Events
 import Character
 import Css
 import Dict
@@ -7,11 +9,14 @@ import GamePage
 import Hash
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput, onSubmit)
+import Json.Decode as Decode
 import Lamdera
 import LoginPage
+import Misc exposing (none)
 import Playground.Advanced as Playground
 import RegisterPage
+import Task
 import Types exposing (..)
 
 
@@ -23,7 +28,13 @@ additional update function; updateFromBackend.
 -}
 app =
     Lamdera.frontend
-        { init = \_ _ -> init
+        { init =
+            \_ _ ->
+                if devMode then
+                    devInit
+
+                else
+                    init
         , update = update
         , updateFromBackend = updateFromBackend
         , view =
@@ -39,7 +50,10 @@ app =
 
 subscriptions : Model -> Sub FrontendMsg
 subscriptions model =
-    Sub.map GameMsg Playground.subscriptions.all
+    Sub.batch
+        [ Sub.map GameMsg Playground.subscriptions.all
+        , Browser.Events.onKeyDown (Decode.field "code" Decode.string |> Decode.map KeyDown)
+        ]
 
 
 type alias Model =
@@ -48,13 +62,9 @@ type alias Model =
 
 init : ( Model, Cmd FrontendMsg )
 init =
-    if False then
-        devInit
-
-    else
-        ( { page = StartPage }
-        , Cmd.none
-        )
+    ( { page = StartPage }
+    , Cmd.none
+    )
 
 
 devInit : ( Model, Cmd FrontendMsg )
@@ -125,6 +135,33 @@ update msg model =
                             |> checkChunk cx (cy - 1)
                             |> checkChunk (cx - 1) (cy - 1)
                    )
+
+        ( KeyDown code, GamePage submodel ) ->
+            if code == "Enter" then
+                let
+                    ( _, memory ) =
+                        Playground.get submodel
+                in
+                case memory.chatInput of
+                    Just message ->
+                        ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | chatInput = Nothing })) }
+                        , if message == "" then
+                            Cmd.none
+
+                          else
+                            Lamdera.sendToBackend (SendMessage message)
+                        )
+
+                    Nothing ->
+                        ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | chatInput = Just "" })) }
+                        , Browser.Dom.focus "chatInput" |> Task.attempt (always Noop)
+                        )
+
+            else
+                ( model, Cmd.none )
+
+        ( ChatInput message, GamePage submodel ) ->
+            ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | chatInput = Just message })) }, Cmd.none )
 
         ( GotoLogin, _ ) ->
             ( { model | page = LoginPage LoginPage.init }, Cmd.none )
@@ -208,6 +245,19 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        ( GotMessage message, GamePage game ) ->
+            ( { model
+                | page =
+                    GamePage <|
+                        Playground.edit
+                            (\_ memory ->
+                                { memory | messages = message :: memory.messages |> List.take 7 }
+                            )
+                            game
+              }
+            , Cmd.none
+            )
+
         _ ->
             ( model, Cmd.none )
 
@@ -224,10 +274,40 @@ view model =
                 RegisterPage.view regmodel |> Html.map RegisterMsg
 
             GamePage gamemodel ->
-                GamePage.game.view gamemodel
+                let
+                    ( _, memory ) =
+                        Playground.get gamemodel
+                in
+                div []
+                    [ GamePage.game.view gamemodel
+                    , chat memory
+                    ]
 
             StartPage ->
                 startView
+        ]
+
+
+chat { messages, chatInput } =
+    div [ class "chat" ]
+        [ div []
+            (messages
+                |> List.reverse
+                |> List.map
+                    (\m ->
+                        div [ class "message" ]
+                            [ div [ class "avatar", style "background-image" ("url(" ++ Character.url m.skin ++ ")") ] []
+                            , div [ class "username" ] [ text m.username ]
+                            , div [] [ text m.message ]
+                            ]
+                    )
+            )
+        , case chatInput of
+            Just message ->
+                input [ value message, onInput ChatInput, id "chatInput" ] []
+
+            Nothing ->
+                none
         ]
 
 

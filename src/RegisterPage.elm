@@ -6,7 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Lamdera
-import Misc exposing (attrIf)
+import Misc exposing (attrIf, none)
 import Rumkin exposing (RumkinResult, Strength(..))
 import Types exposing (..)
 
@@ -90,7 +90,11 @@ view model =
                     , type_ "password"
                     ]
                     []
-                , viewStrength stats
+                , if model.password == "" then
+                    none
+
+                  else
+                    viewStrength stats
                 ]
             , label []
                 [ text "Repeat password"

@@ -34,12 +34,7 @@ generateChunk x y =
                 |> Matrix.fromLists
                 |> Maybe.withDefault Matrix.empty
     in
-    { textures =
-        [ ( Water, image matrix Water )
-        , ( Beach, image matrix Beach )
-        , ( Dirt, image matrix Dirt )
-        , ( Grass, image matrix Grass )
-        ]
+    { textures = List.map (\t -> ( t, image matrix t )) terrainList
     }
 
 
@@ -61,26 +56,57 @@ texture t =
     let
         str =
             case t of
+                Water ->
+                    "waterDeep"
+
                 Beach ->
                     "beach"
-
-                Grass ->
-                    "grass"
 
                 Dirt ->
                     "dirt1"
 
-                Water ->
-                    "waterDeep"
+                Grass ->
+                    "grass"
+
+                Snow ->
+                    "snow"
     in
     Playground.tilemap 32 32 <| "/terrain/" ++ str ++ ".png"
 
 
 type Terrain
-    = Beach
-    | Grass
+    = Water
+    | Beach
     | Dirt
-    | Water
+    | Grass
+    | Snow
+
+
+terrainLevel t =
+    case t of
+        Water ->
+            0
+
+        Beach ->
+            1
+
+        Dirt ->
+            2
+
+        Grass ->
+            3
+
+        Snow ->
+            4
+
+
+terrainList =
+    [ Water
+    , Beach
+    , Dirt
+    , Grass
+    , Snow
+    ]
 
 
 valuesFromCoord : Int -> Int -> { height : Float, temp : Float, humidity : Float, random : Float }
@@ -89,9 +115,9 @@ valuesFromCoord x y =
         ( fx, fy ) =
             ( toFloat x, toFloat y )
     in
-    { height = fractal2d { steps = 6, persistence = 2, scale = 4 } permTable fx fy
-    , temp = fractal2d { steps = 1, persistence = 2, scale = 20 } permTable fx fy
-    , humidity = fractal2d { steps = 1, persistence = 2, scale = 19 } permTable fx fy
+    { height = fractal2d { steps = 7, persistence = 2, scale = 4 } permTable fx fy
+    , temp = fractal2d { steps = 3, persistence = 2, scale = 20 } permTable fx fy
+    , humidity = fractal2d { steps = 3, persistence = 2, scale = 19 } permTable fx fy
     , random = Simplex.noise2d permTable fx fy
     }
 

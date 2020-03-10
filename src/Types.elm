@@ -8,6 +8,10 @@ import Playground
 import World exposing (Chunk)
 
 
+devMode =
+    False
+
+
 type alias FrontendModel =
     { page : Page
     }
@@ -24,7 +28,13 @@ type alias Memory =
     { player : Character
     , others : Dict String Character
     , chunks : Dict ( Int, Int ) (Request Chunk)
+    , messages : List Message
+    , chatInput : Maybe String
     }
+
+
+type alias Message =
+    { username : String, skin : Int, message : String }
 
 
 type Request a
@@ -52,6 +62,9 @@ type FrontendMsg
     | GameMsg Playground.Msg
     | GotoLogin
     | GotoRegister
+    | KeyDown String
+    | ChatInput String
+    | ChatSubmit
     | Noop
 
 
@@ -60,6 +73,7 @@ type ToBackend
     | CreateAccount String Hash Int
     | Login String Hash
     | UpdatePlayer Character
+    | SendMessage String
     | GetChunk Int Int
 
 
@@ -73,6 +87,7 @@ type ToFrontend
     | WrongUsernameOrPassword
     | UsernameAlreadyExists
     | UpdateOtherPlayer String Character
+    | GotMessage Message
     | ChunkResponse Int Int Chunk
 
 

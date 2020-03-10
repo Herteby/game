@@ -17,6 +17,8 @@ init account others =
                     { player = account.character
                     , others = others
                     , chunks = Dict.empty
+                    , messages = []
+                    , chatInput = Nothing
                     }
                 )
             )
@@ -33,6 +35,8 @@ game =
             }
         , others = Dict.empty
         , chunks = Dict.empty
+        , messages = []
+        , chatInput = Nothing
         }
 
 
@@ -74,4 +78,4 @@ render computer { player, others, chunks } =
 
 updateGame : Computer -> Memory -> Memory
 updateGame computer memory =
-    { memory | player = Character.update computer memory.player }
+    { memory | player = Character.update computer memory }

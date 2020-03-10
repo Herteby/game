@@ -28,6 +28,10 @@ button {
     font-size:16px;
 }
 
+input {
+    font-size:16px;
+}
+
 button.disabled {
     background:#666;
     color:#888;
@@ -108,5 +112,47 @@ button.big {
     75.0001% {background-position: right top;}
     100% {background-position: right top;}
 }
+
+
+.chat {
+    position:fixed;
+    display:flex;
+    flex-direction:column;
+    bottom:10px;
+    left:10px;
+    width:400px;
+    border-radius:5px;
+    padding:5px;
+    background:rgba(0,0,0,0.5);
+    color:#fff;
+    z-index:9999;
+}
+
+.chat .message {
+    padding:5px 0;
+    border-bottom:1px solid rgba(255,255,255,0.1)
+}
+
+.chat .username {
+    font-weight:bold;
+}
+
+
+.chat .avatar {
+    width:26px;
+    height:26px;
+    background-position:center top;
+    float:left;
+    margin-right:5px;
+}
+.chat input {
+    background:rgba(0,0,0,0.5);
+    color:#fff;
+    border:none;
+    padding:5px;
+}
+
+
+
 
 """

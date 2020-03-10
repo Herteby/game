@@ -407,7 +407,7 @@ subscriptions_ :
     }
 subscriptions_ =
     { keys =
-        [ E.onKeyUp (D.map (KeyChanged False) (D.field "key" D.string))
+        [ E.onKeyUp (D.map (KeyChanged False) (D.field "code" D.string))
         , E.onKeyDown
             (D.field "repeat" D.bool
                 |> D.andThen
@@ -416,7 +416,7 @@ subscriptions_ =
                             D.fail ""
 
                         else
-                            D.field "key" D.string
+                            D.field "code" D.string
                                 |> D.map (KeyChanged True)
                     )
             )
@@ -534,13 +534,16 @@ updateKeyboard isDown key keyboard =
                 Set.remove key keyboard.keys
     in
     case key of
-        " " ->
+        "Space" ->
             { keyboard | keys = keys, space = isDown }
 
         "Enter" ->
             { keyboard | keys = keys, enter = isDown }
 
-        "Shift" ->
+        "ShiftLeft" ->
+            { keyboard | keys = keys, shift = isDown }
+
+        "ShiftRight" ->
             { keyboard | keys = keys, shift = isDown }
 
         "Backspace" ->

@@ -34,46 +34,50 @@ type Direction
     | Right
 
 
-update { keyboard, time } character =
-    let
-        ( x, y ) =
-            character.coords
+update { keyboard, time } { player, chatInput } =
+    if chatInput /= Nothing then
+        player
 
-        ( vx, vy ) =
-            toXY keyboard
+    else
+        let
+            ( x, y ) =
+                player.coords
 
-        d =
-            Playground.delta time |> toFloat |> clamp 0 60
+            ( vx, vy ) =
+                toXY keyboard
 
-        speed_ =
-            if keyboard.shift then
-                speed * 3
+            d =
+                Playground.delta time |> toFloat |> clamp 0 60
 
-            else
-                speed
-    in
-    { character
-        | coords =
-            ( x + (vx * speed_ * d)
-            , y + (vy * speed_ * d)
-            )
-        , direction =
-            if vy > 0 then
-                Up
+            speed_ =
+                if keyboard.shift then
+                    speed * 3
 
-            else if vy < 0 then
-                Down
+                else
+                    speed
+        in
+        { player
+            | coords =
+                ( x + (vx * speed_ * d)
+                , y + (vy * speed_ * d)
+                )
+            , direction =
+                if vy > 0 then
+                    Up
 
-            else if vx < 0 then
-                Left
+                else if vy < 0 then
+                    Down
 
-            else if vx > 0 then
-                Right
+                else if vx < 0 then
+                    Left
 
-            else
-                character.direction
-        , moving = toXY keyboard /= ( 0, 0 )
-    }
+                else if vx > 0 then
+                    Right
+
+                else
+                    player.direction
+            , moving = toXY keyboard /= ( 0, 0 )
+        }
 
 
 url : Int -> String
@@ -134,13 +138,13 @@ toXY : Keyboard -> ( Float, Float )
 toXY keyboard =
     let
         x =
-            (if keyboard.right || Set.member "d" keyboard.keys then
+            (if keyboard.right || Set.member "KeyD" keyboard.keys then
                 1
 
              else
                 0
             )
-                - (if keyboard.left || Set.member "a" keyboard.keys then
+                - (if keyboard.left || Set.member "KeyA" keyboard.keys then
                     1
 
                    else
@@ -148,13 +152,13 @@ toXY keyboard =
                   )
 
         y =
-            (if keyboard.up || Set.member "w" keyboard.keys then
+            (if keyboard.up || Set.member "KeyW" keyboard.keys then
                 1
 
              else
                 0
             )
-                - (if keyboard.down || Set.member "s" keyboard.keys then
+                - (if keyboard.down || Set.member "KeyS" keyboard.keys then
                     1
 
                    else

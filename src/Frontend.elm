@@ -1,4 +1,4 @@
-module Frontend exposing (Model, app)
+module Frontend exposing (app, init)
 
 import Browser.Dom
 import Browser.Events
@@ -48,7 +48,7 @@ app =
         }
 
 
-subscriptions : Model -> Sub FrontendMsg
+subscriptions : FrontendModel -> Sub FrontendMsg
 subscriptions model =
     Sub.batch
         [ Sub.map GameMsg Playground.subscriptions.all
@@ -56,18 +56,14 @@ subscriptions model =
         ]
 
 
-type alias Model =
-    FrontendModel
-
-
-init : ( Model, Cmd FrontendMsg )
+init : ( FrontendModel, Cmd FrontendMsg )
 init =
     ( { page = StartPage }
     , Cmd.none
     )
 
 
-devInit : ( Model, Cmd FrontendMsg )
+devInit : ( FrontendModel, Cmd FrontendMsg )
 devInit =
     case Character.create 5 of
         Just char ->
@@ -90,7 +86,7 @@ devInit =
 
 {-| This is the normal frontend update function. It handles all messages that can occur on the frontend.
 -}
-update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
+update : FrontendMsg -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 update msg model =
     case ( msg, model.page ) of
         ( LoginMsg submsg, LoginPage submodel ) ->
@@ -199,7 +195,7 @@ with msg page model =
 
 {-| This is the added update function. It handles all messages that can arrive from the backend.
 -}
-updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
+updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
 updateFromBackend msg model =
     case ( msg, model.page ) of
         ( LoggedIn account others, _ ) ->
@@ -262,7 +258,7 @@ updateFromBackend msg model =
             ( model, Cmd.none )
 
 
-view : Model -> Html FrontendMsg
+view : FrontendModel -> Html FrontendMsg
 view model =
     div [ class "main" ]
         [ Html.node "style" [] [ text Css.css ]

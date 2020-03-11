@@ -10,6 +10,7 @@ import Hash
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
+import Html.Lazy exposing (..)
 import Json.Decode as Decode
 import Lamdera
 import LoginPage
@@ -276,7 +277,8 @@ view model =
                 in
                 div []
                     [ GamePage.game.view gamemodel
-                    , chat memory
+                    , lazy2 chat memory.messages memory.chatInput
+                    , viewCoords memory.player.coords
                     ]
 
             StartPage ->
@@ -284,7 +286,14 @@ view model =
         ]
 
 
-chat { messages, chatInput } =
+viewCoords coords =
+    div [ class "coords" ]
+        [ div [] [ text ("x: " ++ (Tuple.first >> round >> String.fromInt) coords) ]
+        , div [] [ text ("y: " ++ (Tuple.second >> round >> String.fromInt) coords) ]
+        ]
+
+
+chat messages chatInput =
     div [ class "chat" ]
         [ div []
             (messages
@@ -293,8 +302,10 @@ chat { messages, chatInput } =
                     (\m ->
                         div [ class "message" ]
                             [ div [ class "avatar", style "background-image" ("url(" ++ Character.url m.skin ++ ")") ] []
-                            , div [ class "username" ] [ text m.username ]
-                            , div [] [ text m.message ]
+                            , div []
+                                [ div [ class "username" ] [ text m.username ]
+                                , div [] [ text m.message ]
+                                ]
                             ]
                     )
             )
@@ -303,7 +314,7 @@ chat { messages, chatInput } =
                 input [ value message, onInput ChatInput, id "chatInput" ] []
 
             Nothing ->
-                none
+                div [ class "chatHint" ] [ text "Press enter to chat" ]
         ]
 
 

@@ -123,14 +123,14 @@ button.big {
     width:400px;
     border-radius:5px;
     padding:5px;
-    background:rgba(0,0,0,0.5);
+    background:rgba(0,0,0,0.3);
     color:#fff;
     z-index:9999;
 }
 
 .chat .message {
+    display:flex;
     padding:5px 0;
-    border-bottom:1px solid rgba(255,255,255,0.1)
 }
 
 .chat .username {
@@ -142,8 +142,8 @@ button.big {
     width:26px;
     height:26px;
     background-position:center top;
-    float:left;
     margin-right:5px;
+    flex-shrink:0;
 }
 .chat input {
     background:rgba(0,0,0,0.5);
@@ -152,7 +152,14 @@ button.big {
     padding:5px;
 }
 
+.chat .chatHint {
+    color:#888;
+}
 
-
+.coords {
+    position:fixed;
+    top:10px;
+    left:10px;
+}
 
 """

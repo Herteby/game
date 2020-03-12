@@ -51,6 +51,11 @@ permTable =
     Simplex.permutationTableFromInt 42
 
 
+permTable2 : PermutationTable
+permTable2 =
+    Simplex.permutationTableFromInt 420
+
+
 texture : Terrain -> String -> Playground.Shape
 texture t =
     let
@@ -115,19 +120,19 @@ valuesFromCoord x y =
         ( fx, fy ) =
             ( toFloat x, toFloat y )
     in
-    { height = fractal2d { steps = 7, persistence = 2, scale = 4 } permTable fx fy
-    , temp = fractal2d { steps = 3, persistence = 2, scale = 20 } permTable fx fy
-    , humidity = fractal2d { steps = 3, persistence = 2, scale = 19 } permTable fx fy
+    { height = fractal2d { steps = 8, persistence = 2, scale = 4 } permTable fx fy
+    , temp = fractal2d { steps = 6, persistence = 2, scale = 100 } permTable2 fx fy
+    , humidity = fractal2d { steps = 6, persistence = 2, scale = 100 } permTable fx fy
     , random = Simplex.noise2d permTable fx fy
     }
 
 
 terrainFromValues : { height : Float, temp : Float, humidity : Float, random : Float } -> ( Terrain, Float )
 terrainFromValues { height, temp, humidity, random } =
-    ( if height > 0.2 then
+    ( if height > 0.12 then
         Grass
 
-      else if height > 0.15 then
+      else if height > 0.1 then
         Dirt
 
       else if height > 0 then

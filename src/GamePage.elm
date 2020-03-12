@@ -19,6 +19,7 @@ init account others =
                     , chunks = Dict.empty
                     , messages = []
                     , chatInput = Nothing
+                    , messageI = 0
                     }
                 )
             )
@@ -37,6 +38,7 @@ game =
         , chunks = Dict.empty
         , messages = []
         , chatInput = Nothing
+        , messageI = 0
         }
 
 

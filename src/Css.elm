@@ -78,7 +78,7 @@ button.big {
 
 
 .characterPicker {
-
+    width:900px;
 }
 .character {
     width:78px;
@@ -125,6 +125,8 @@ button.big {
     padding:5px;
     background:rgba(0,0,0,0.3);
     color:#fff;
+    text-shadow:1px 1px #000;
+    font-size:14px;
     z-index:9999;
 }
 
@@ -148,18 +150,20 @@ button.big {
 .chat input {
     background:rgba(0,0,0,0.5);
     color:#fff;
+    font-size:14px;
     border:none;
     padding:5px;
 }
 
 .chat .chatHint {
-    color:#888;
+    color:rgba(255,255,255,0.6);
 }
 
 .coords {
     position:fixed;
     top:10px;
     left:10px;
+    text-shadow:1px 1px #000;
 }
 
 """

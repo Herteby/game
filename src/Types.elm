@@ -28,8 +28,9 @@ type alias Memory =
     { player : Character
     , others : Dict String Character
     , chunks : Dict ( Int, Int ) (Request Chunk)
-    , messages : List Message
+    , messages : List ( Int, Message )
     , chatInput : Maybe String
+    , messageI : Int
     }
 
 
@@ -65,6 +66,7 @@ type FrontendMsg
     | KeyDown String
     | ChatInput String
     | ChatSubmit
+    | RemoveMessage Int
     | Noop
 
 
@@ -83,6 +85,7 @@ type BackendMsg
 
 type ToFrontend
     = LoggedIn Account (Dict String Character)
+    | OtherLoggedIn Int String
     | CheckNameResponse Bool
     | WrongUsernameOrPassword
     | UsernameAlreadyExists

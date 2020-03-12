@@ -6,7 +6,7 @@
     "elm-version": "0.19.0",
     "dependencies": {
         "direct": {
-            "Herteby/simplex-noise": "1.0.0",
+            "Herteby/simplex-noise": "1.2.1",
             "Punie/elm-matrix": "2.0.0",
             "SiriusStarr/elm-password-strength": "1.0.1",
             "avh4/elm-color": "1.0.0",

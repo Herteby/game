@@ -62,11 +62,20 @@ updateFromFrontend sessionId clientId msg model =
                                                 Just ( a.username, a.character )
                                         )
                                     |> Dict.fromList
+
+                            notifyOthers =
+                                model.accounts
+                                    |> List.filterMap .loggedIn
+                                    |> List.map
+                                        (\id ->
+                                            Lamdera.sendToFrontend id (OtherLoggedIn character.skin account.username)
+                                        )
                         in
                         ( { model
                             | accounts = account :: model.accounts
                           }
-                        , Lamdera.sendToFrontend clientId (LoggedIn account others)
+                        , Cmd.batch
+                            (Lamdera.sendToFrontend clientId (LoggedIn account others) :: notifyOthers)
                         )
 
                     Nothing ->
@@ -94,6 +103,15 @@ updateFromFrontend sessionId clientId msg model =
                                             Just ( a.username, a.character )
                                     )
                                 |> Dict.fromList
+
+                        notifyOthers =
+                            model.accounts
+                                |> List.filterMap .loggedIn
+                                |> List.filter (\id -> id /= clientId)
+                                |> List.map
+                                    (\id ->
+                                        Lamdera.sendToFrontend id (OtherLoggedIn account.character.skin account.username)
+                                    )
                     in
                     ( { model | accounts = List.setIf match account_ model.accounts }
                     , Lamdera.sendToFrontend clientId (LoggedIn account_ others)

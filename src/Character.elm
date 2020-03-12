@@ -24,7 +24,7 @@ create skin =
 
 skinList : List Int
 skinList =
-    List.range 1 40
+    List.range 1 45
 
 
 type Direction

@@ -10,12 +10,14 @@ import Hash
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
+import Html.Keyed
 import Html.Lazy exposing (..)
 import Json.Decode as Decode
 import Lamdera
 import LoginPage
 import Misc exposing (none)
 import Playground.Advanced as Playground
+import Process
 import RegisterPage
 import Task
 import Types exposing (..)
@@ -160,6 +162,17 @@ update msg model =
         ( ChatInput message, GamePage submodel ) ->
             ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | chatInput = Just message })) }, Cmd.none )
 
+        ( RemoveMessage i, GamePage submodel ) ->
+            ( { model
+                | page =
+                    GamePage
+                        (submodel
+                            |> Playground.edit (\_ mem -> { mem | messages = List.filter (\( i_, m ) -> i_ /= i) mem.messages })
+                        )
+              }
+            , Cmd.none
+            )
+
         ( GotoLogin, _ ) ->
             ( { model | page = LoginPage LoginPage.init }, Cmd.none )
 
@@ -243,16 +256,23 @@ updateFromBackend msg model =
             )
 
         ( GotMessage message, GamePage game ) ->
+            let
+                ( _, mem ) =
+                    Playground.get game
+            in
             ( { model
                 | page =
                     GamePage <|
                         Playground.edit
                             (\_ memory ->
-                                { memory | messages = message :: memory.messages |> List.take 7 }
+                                { memory
+                                    | messages = ( memory.messageI, message ) :: memory.messages |> List.take 10
+                                    , messageI = memory.messageI + 1
+                                }
                             )
                             game
               }
-            , Cmd.none
+            , Process.sleep 30000 |> Task.perform (\_ -> RemoveMessage mem.messageI)
             )
 
         _ ->
@@ -295,20 +315,21 @@ viewCoords coords =
 
 chat messages chatInput =
     div [ class "chat" ]
-        [ div []
-            (messages
-                |> List.reverse
-                |> List.map
-                    (\m ->
-                        div [ class "message" ]
-                            [ div [ class "avatar", style "background-image" ("url(" ++ Character.url m.skin ++ ")") ] []
-                            , div []
-                                [ div [ class "username" ] [ text m.username ]
-                                , div [] [ text m.message ]
-                                ]
+        [ messages
+            |> List.reverse
+            |> List.map
+                (\( i, m ) ->
+                    ( String.fromInt i
+                    , div [ class "message" ]
+                        [ div [ class "avatar", style "background-image" ("url(" ++ Character.url m.skin ++ ")") ] []
+                        , div []
+                            [ div [ class "username" ] [ text m.username ]
+                            , div [] [ text m.message ]
                             ]
+                        ]
                     )
-            )
+                )
+            |> Html.Keyed.node "div" []
         , case chatInput of
             Just message ->
                 input [ value message, onInput ChatInput, id "chatInput" ] []

@@ -1,23 +1,21 @@
 module Character exposing (..)
 
 import AltMath.Vector2 as Vec2 exposing (Vec2)
-import Playground exposing (Keyboard)
+import Playground exposing (Computer, Keyboard, Time)
 import Playground.Extra as Playground
 import Set
-
-
-type alias Character =
-    { coords : Vec2
-    , direction : Direction
-    , moving : Bool
-    , skin : Int
-    }
+import Types exposing (..)
 
 
 create : Int -> Maybe Character
 create skin =
     if List.member skin skinList then
-        Just { coords = { x = 0, y = 0 }, direction = Down, moving = False, skin = skin }
+        Just
+            { coords = { x = 0, y = 0 }
+            , direction = Down
+            , speed = Standing
+            , skin = skin
+            }
 
     else
         Nothing
@@ -28,20 +26,14 @@ skinList =
     List.range 1 45
 
 
-type Direction
-    = Up
-    | Down
-    | Left
-    | Right
-
-
+update : Computer -> Memory -> Character
 update { keyboard, time } { player, chatInput } =
     if chatInput /= Nothing then
         player
 
     else
         let
-            kb =
+            dir =
                 toXY keyboard
 
             d =
@@ -56,25 +48,63 @@ update { keyboard, time } { player, chatInput } =
         in
         { player
             | coords =
-                Vec2.scale (speed_ * d) kb
+                Vec2.scale (speed_ * d) dir
                     |> Vec2.add player.coords
             , direction =
-                if kb.y > 0 then
+                if dir.y > 0 then
                     Up
 
-                else if kb.y < 0 then
+                else if dir.y < 0 then
                     Down
 
-                else if kb.x < 0 then
+                else if dir.x < 0 then
                     Left
 
-                else if kb.x > 0 then
+                else if dir.x > 0 then
                     Right
 
                 else
                     player.direction
-            , moving = toXY keyboard /= { x = 0, y = 0 }
+            , speed =
+                if toXY keyboard == { x = 0, y = 0 } then
+                    Standing
+
+                else if keyboard.shift then
+                    Sprinting
+
+                else
+                    Walking
         }
+
+
+interpolate : Time -> Character -> Vec2 -> Vec2
+interpolate time char coords =
+    if coords == char.coords then
+        coords
+
+    else
+        let
+            sprint =
+                if char.speed == Sprinting then
+                    3
+
+                else
+                    1
+
+            d =
+                Playground.delta time |> toFloat |> clamp 0 60
+
+            dir =
+                Vec2.direction char.coords coords
+
+            newCoords =
+                Vec2.add (Vec2.scale (d * speed * sprint) dir) coords
+        in
+        if Vec2.distance newCoords char.coords < Vec2.distance coords char.coords then
+            newCoords
+
+        else
+            char.coords
 
 
 url : Int -> String
@@ -108,7 +138,7 @@ render time char =
                     9
 
         frame =
-            if not char.moving then
+            if char.speed == Standing then
                 row + 1
 
             else if mod < 125 then
@@ -124,7 +154,6 @@ render time char =
                 row + 1
     in
     tile char.skin frame
-        |> Playground.move char.coords.x char.coords.y
 
 
 speed =

@@ -6,6 +6,7 @@ import Evergreen.V11.Hash
 import Lamdera
 import Matrix
 import Evergreen.V11.Playground
+import Time
 
 
 type alias LoginModel = 
@@ -111,6 +112,7 @@ type alias Memory =
     , chatInput : (Maybe String)
     , messageI : Int
     , showPlayerList : Bool
+    , lastUpdate : Time.Posix
     }
 
 

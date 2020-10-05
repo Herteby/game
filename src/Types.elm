@@ -1,12 +1,13 @@
 module Types exposing (..)
 
-import Character exposing (Character)
+import AltMath.Vector2 exposing (Vec2)
 import Dict exposing (Dict)
 import Hash exposing (Hash)
 import Lamdera exposing (ClientId)
 import Matrix exposing (Matrix)
 import Playground exposing (Game)
 import Random exposing (Seed)
+import Time
 
 
 type alias FrontendModel =
@@ -23,13 +24,35 @@ type Page
 
 type alias Memory =
     { player : Character
-    , others : Dict String Character
+    , others : Dict String ( Character, Vec2 )
     , chunks : Dict ( Int, Int ) (Request Chunk)
     , messages : List ( Int, Message )
     , chatInput : Maybe String
     , messageI : Int
     , showPlayerList : Bool
+    , lastUpdate : ( Time.Posix, Character )
     }
+
+
+type alias Character =
+    { coords : Vec2
+    , direction : Direction
+    , speed : Speed
+    , skin : Int
+    }
+
+
+type Direction
+    = Up
+    | Down
+    | Left
+    | Right
+
+
+type Speed
+    = Standing
+    | Walking
+    | Sprinting
 
 
 type Message

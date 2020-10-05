@@ -3,7 +3,7 @@ module Frontend exposing (app, init)
 import AltMath.Vector2 exposing (Vec2)
 import Browser.Dom
 import Browser.Events
-import Character exposing (Character)
+import Character
 import Dict exposing (Dict)
 import Env
 import FontAwesome.Icon exposing (Icon)
@@ -19,11 +19,14 @@ import Html.Lazy exposing (..)
 import Json.Decode as Decode
 import Lamdera
 import LoginPage
+import Maybe.Extra as Maybe
+import Playground
 import Playground.Advanced as Playground
 import Process
 import RegisterPage
 import Set
 import Task
+import Time
 import Types exposing (..)
 import UI exposing (none, textSpan)
 import UI.Button as Button exposing (Action(..))
@@ -121,11 +124,8 @@ update msg model =
             GamePage.game.update submsg submodel
                 |> (\( newmodel, cmd ) ->
                         let
-                            newMemory =
-                                Playground.get newmodel |> Tuple.second
-
-                            oldMemory =
-                                Playground.get submodel |> Tuple.second
+                            ( computer, newMemory ) =
+                                Playground.get newmodel
 
                             ( cx, cy ) =
                                 newMemory.player.coords
@@ -133,14 +133,19 @@ update msg model =
                                             ( round <| x / (64 * 16) - 0.5, round <| y / (64 * 16) - 0.5 )
                                        )
 
-                            cmd_ =
-                                if newMemory.player /= oldMemory.player then
-                                    Lamdera.sendToBackend (UpdatePlayer newMemory.player)
+                            ( lastUpdate, cmd_ ) =
+                                if newMemory.player /= Tuple.second newMemory.lastUpdate && (Playground.now computer.time > Time.posixToMillis (Tuple.first newMemory.lastUpdate) + 250) then
+                                    ( ( Time.millisToPosix <| Playground.now computer.time, newMemory.player )
+                                    , Lamdera.sendToBackend (UpdatePlayer newMemory.player)
+                                    )
 
                                 else
-                                    Cmd.none
+                                    ( newMemory.lastUpdate, Cmd.none )
+
+                            newNewModel =
+                                newmodel |> Playground.edit (\_ mem -> { mem | lastUpdate = lastUpdate })
                         in
-                        ( { page = GamePage newmodel }
+                        ( { page = GamePage newNewModel }
                         , Cmd.batch
                             [ Cmd.map GameMsg cmd
                             , cmd_
@@ -255,7 +260,14 @@ updateFromBackend msg model =
                     GamePage <|
                         Playground.edit
                             (\_ memory ->
-                                { memory | others = Dict.insert username character memory.others }
+                                { memory
+                                    | others =
+                                        memory.others
+                                            |> Dict.update username
+                                                (\prev ->
+                                                    Just ( character, Maybe.unwrap character.coords (Tuple.first >> .coords) prev )
+                                                )
+                                }
                             )
                             game
               }
@@ -411,7 +423,7 @@ uiButton icon title msg =
         [ Icon.view [] icon ]
 
 
-playerList : Dict String Character -> Html FrontendMsg
+playerList : Dict String ( Character, Vec2 ) -> Html FrontendMsg
 playerList players =
     div [ class "overlay", onClick TogglePlayerList ]
         [ div [ class "modal" ]
@@ -419,10 +431,18 @@ playerList players =
             , div [ class "body" ]
                 (Dict.toList players
                     |> List.map
-                        (\( username, character ) ->
+                        (\( username, ( character, coords ) ) ->
                             div [ class "player" ]
                                 [ div [ class "avatar", style "background-image" ("url(" ++ Character.url character.skin ++ ")") ] []
                                 , text username
+                                , div []
+                                    [ div [] [ text ("x: " ++ String.fromInt (round character.coords.x)) ]
+                                    , div [] [ text ("y: " ++ String.fromInt (round character.coords.y)) ]
+                                    ]
+                                , div []
+                                    [ div [] [ text ("x: " ++ String.fromInt (round coords.x)) ]
+                                    , div [] [ text ("y: " ++ String.fromInt (round coords.y)) ]
+                                    ]
                                 ]
                         )
                 )

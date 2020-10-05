@@ -1,11 +1,12 @@
 module GamePage exposing (..)
 
 import AltMath.Vector2 as Vec2
-import Character exposing (Character, Direction(..))
+import Character
 import Dict exposing (Dict)
 import Playground exposing (Computer, Shape)
 import Playground.Advanced as Playground
 import Terrain
+import Time
 import Types exposing (..)
 import World
 
@@ -17,32 +18,37 @@ init account others =
             (Playground.edit
                 (\_ _ ->
                     { player = account.character
-                    , others = others
+                    , others = Dict.map (\_ c -> ( c, c.coords )) others
                     , chunks = Dict.empty
                     , messages = []
                     , chatInput = Nothing
                     , messageI = 0
                     , showPlayerList = False
+                    , lastUpdate = ( Time.millisToPosix 0, account.character )
                     }
                 )
             )
 
 
 game =
-    Playground.embed render
-        updateGame
-        { player =
+    let
+        char =
             { coords = { x = 0, y = 0 }
             , direction = Down
-            , moving = False
+            , speed = Standing
             , skin = 1
             }
+    in
+    Playground.embed render
+        updateGame
+        { player = char
         , others = Dict.empty
         , chunks = Dict.empty
         , messages = []
         , chatInput = Nothing
         , messageI = 0
         , showPlayerList = False
+        , lastUpdate = ( Time.millisToPosix 0, char )
         }
 
 
@@ -81,9 +87,9 @@ render computer { player, others, chunks } =
     in
     Playground.square Playground.black 2000
         :: [ terrain
-                ++ ((player :: Dict.values others)
-                        |> List.sortBy (.coords >> .y >> negate)
-                        |> List.map (Character.render computer.time)
+                ++ (((player |> (\c -> ( c, c.coords ))) :: Dict.values others)
+                        |> List.sortBy (Tuple.second >> .y >> negate)
+                        |> List.map (\( c, coords ) -> Character.render computer.time c |> Playground.move coords.x coords.y)
                    )
                 |> Playground.group
                 |> (if computer.keyboard.space then
@@ -98,4 +104,7 @@ render computer { player, others, chunks } =
 
 updateGame : Computer -> Memory -> Memory
 updateGame computer memory =
-    { memory | player = Character.update computer memory }
+    { memory
+        | player = Character.update computer memory
+        , others = Dict.map (\_ ( c, coords ) -> ( c, Character.interpolate computer.time c coords )) memory.others
+    }

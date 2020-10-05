@@ -49,9 +49,9 @@ generator terrain ({ height, humidity, temp, foliage, x, y } as env) =
                 else
                     Random.map Just <| randomTree env
 
-            else if foliage < -0.4 then
+            else if foliage < -0.4 && modBy 2 x == 0 && modBy 2 y == 0 then
                 percent
-                    [ ( 20, Random.int 0 127 |> Random.map Flower ) ]
+                    [ ( 30, randomFlower env ) ]
 
             else
                 none
@@ -124,6 +124,29 @@ randomTree { temp } =
         (Random.uniform T1 [ T2, T3, T4 ])
 
 
+randomFlower : Environment -> Generator Object
+randomFlower { temp, humidity, volcanism, x, y } =
+    let
+        color =
+            case ( temp > 0, humidity > 0, volcanism > 0 ) of
+                ( True, True, _ ) ->
+                    FlowerRed
+
+                ( True, False, _ ) ->
+                    FlowerYellow
+
+                ( False, False, _ ) ->
+                    FlowerBlue
+
+                ( False, True, True ) ->
+                    FlowerPurple
+
+                ( False, True, False ) ->
+                    FlowerPink
+    in
+    Random.map (Flower color) (Random.uniform F1 [ F2, F3, F4 ])
+
+
 percent : List ( Float, Generator a ) -> Generator (Maybe a)
 percent l =
     let
@@ -143,25 +166,20 @@ none =
 render : Object -> Shape
 render object =
     case object of
-        Tree c v ->
-            renderTree c v
+        Tree color variant ->
+            renderTree color variant
 
-        Conifer v s ->
-            renderConifer v s
+        Conifer variant snow ->
+            renderConifer variant snow
 
-        DeadTree v ->
-            renderDeadTree v
+        DeadTree variant ->
+            renderDeadTree variant
 
         Shell variant ->
             renderShell variant
 
-        Flower variant ->
-            case Array.get variant flowers of
-                Just f ->
-                    f
-
-                Nothing ->
-                    renderFlower variant
+        Flower color variant ->
+            renderFlower color variant
 
 
 renderTree : TreeColor -> TreeVariant -> Shape
@@ -268,12 +286,38 @@ renderShell variant =
         |> Playground.scale 0.5
 
 
-renderFlower : Int -> Shape
-renderFlower variant =
-    Playground.tile 32 32 "/objects/flowers.png" variant
-        |> Playground.scale 0.5
+renderFlower : FlowerColor -> FlowerVariant -> Shape
+renderFlower color variant =
+    let
+        row =
+            case color of
+                FlowerRed ->
+                    0
 
+                FlowerYellow ->
+                    1
 
-flowers : Array Shape
-flowers =
-    List.range 0 127 |> List.map renderFlower |> Array.fromList
+                FlowerBlue ->
+                    2
+
+                FlowerPurple ->
+                    3
+
+                FlowerPink ->
+                    4
+
+        column =
+            case variant of
+                F1 ->
+                    0
+
+                F2 ->
+                    1
+
+                F3 ->
+                    2
+
+                F4 ->
+                    3
+    in
+    Playground.tile 32 32 "/objects/flowers.png" (row * 4 + column)

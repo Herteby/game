@@ -61,6 +61,16 @@ textSpan string =
         span [] [ text string ]
 
 
+px : Float -> String
+px float =
+    String.fromFloat float ++ "px"
+
+
+pxInt : Int -> String
+pxInt int =
+    String.fromInt int ++ "px"
+
+
 grid : List (List (Html msg)) -> Html msg
 grid =
     grid_ "grid"

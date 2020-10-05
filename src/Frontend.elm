@@ -28,7 +28,7 @@ import Set
 import Task
 import Time
 import Types exposing (..)
-import UI exposing (none, textSpan)
+import UI exposing (none, px, textSpan)
 import UI.Button as Button exposing (Action(..))
 import UI.Icon as Icon
 
@@ -350,6 +350,7 @@ view model =
                     [ GamePage.game.view gamemodel
                     , lazy2 chat memory.messages memory.chatInput
                     , viewCoords memory.player.coords
+                    , namePlates memory.player memory.others
                     , if memory.showPlayerList then
                         playerList memory.others
 
@@ -421,6 +422,23 @@ uiButton icon title msg =
         , Attributes.title title
         ]
         [ Icon.view [] icon ]
+
+
+namePlates : Character -> Dict String ( Character, Vec2 ) -> Html FrontendMsg
+namePlates player others =
+    div [ class "namePlates overlay" ]
+        [ Dict.toList others
+            |> List.map
+                (\( username, ( _, { x, y } ) ) ->
+                    div
+                        [ class "namePlate"
+                        , style "top" (px ((player.coords.y - y) * 2))
+                        , style "left" (px ((x - player.coords.x) * 2))
+                        ]
+                        [ text username ]
+                )
+            |> div []
+        ]
 
 
 playerList : Dict String ( Character, Vec2 ) -> Html FrontendMsg

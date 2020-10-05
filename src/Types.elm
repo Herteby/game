@@ -189,7 +189,22 @@ type Object
     | Conifer ConiferSnow ConiferVariant
     | DeadTree DeadTreeVariant
     | Shell Int
-    | Flower Int
+    | Flower FlowerColor FlowerVariant
+
+
+type FlowerColor
+    = FlowerRed
+    | FlowerYellow
+    | FlowerBlue
+    | FlowerPurple
+    | FlowerPink
+
+
+type FlowerVariant
+    = F1
+    | F2
+    | F3
+    | F4
 
 
 type TreeVariant

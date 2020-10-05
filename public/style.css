@@ -367,16 +367,29 @@ body > div:last-child {
 .modal .header {
   font-size: 20px;
 }
-.player {
+.namePlates {
+  pointer-events: none;
   display: flex;
   flex-direction: row;
   align-items: center;
   padding: 5px;
 }
-.player > *:not(:last-child) {
+.namePlates > div {
+  position: relative;
+}
+.namePlates .namePlate {
+  width: 300px;
+  margin-top: -40px;
+  margin-left: -150px;
+  text-align: center;
+  position: absolute;
+  color: #fff;
+  text-shadow: 1px 1px #000;
+}
+.namePlates > *:not(:last-child) {
   margin-right: 10px;
 }
-.player .avatar {
+.namePlates .avatar {
   width: 52px;
   height: 52px;
   background-position: center top;

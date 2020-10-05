@@ -1,7 +1,7 @@
 module Evergreen.Migrate.V7 exposing (..)
 
-import Evergreen.Type.V5 as Old
-import Evergreen.Type.V7 as New
+import Evergreen.V5.Types as Old
+import Evergreen.V7.Types as New
 import Lamdera.Migrations exposing (..)
 
 

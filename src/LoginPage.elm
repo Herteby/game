@@ -1,11 +1,13 @@
 module LoginPage exposing (..)
 
+import FontAwesome.Solid as Solid
 import Hash
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Lamdera
 import Types exposing (..)
+import UI.Button as Button exposing (Action(..))
 
 
 init : LoginModel
@@ -35,12 +37,13 @@ view model =
         [ Html.form [ class "form", onSubmit Submit ]
             [ label []
                 [ text "Username"
-                , input [ onInput LoginUsername, value model.username ] []
+                , input [ class "input", onInput LoginUsername, value model.username ] []
                 ]
             , label []
                 [ text "Password"
                 , input
-                    [ onInput LoginPassword
+                    [ class "input"
+                    , onInput LoginPassword
                     , value model.password
                     , type_ "password"
                     ]
@@ -51,6 +54,11 @@ view model =
 
               else
                 text ""
-            , button [] [ text "Log in" ]
+            , Button.primary
+                { text = "Enter world"
+                , action = Enabled Submit
+                , icon = Just Solid.signIn
+                , attrs = []
+                }
             ]
         ]

@@ -1,0 +1,86 @@
++prefix-classes('Button__')
+
+  .button
+    rounded()
+    border none
+    display flex
+    align-items center
+    justify-content center
+    position relative
+    overflow hidden
+    user-select none
+    height $inputHeight
+    padding 0 14px
+    
+    .icon:not(:last-child)
+      margin-right 10px
+    &:not(.disabled):not(.loading)
+      interactive()
+
+  .primary
+    color $white
+    background $orange
+
+  .orange
+    color $white
+    background $orange
+
+  .yellow
+    color $white
+    background $yellow
+
+  .secondary
+    background $white
+    color $charcoal
+    border 1px solid $grey
+    &:hover:not(.disabled):not(.loading)
+      border-color $blue
+      background-image none
+    svg
+      color $blue
+
+  .danger
+    background $white
+    border 1px solid $grey
+    color $red
+    &:hover:not(.disabled):not(.loading)
+      border-color $red
+      background-image none
+    &.disabled
+      border-color $darkGrey
+      color $darkGrey
+
+  .disabled
+    background $grey
+    color $darkGrey
+    cursor default
+    border none
+    svg
+      color $darkGrey
+
+
+  .small
+    height 32px
+    padding 0 10px
+    .icon:not(:last-child)
+      margin-right 5px
+
+  .extraSmall
+    height 20px
+    padding 0 3px
+    font-size-s()
+    .icon:not(:last-child)
+      margin-right 3px
+
+  .loading
+    cursor default
+    .spinner
+      display flex
+      align-items center
+      justify-content center
+      position absolute
+      background inherit
+      top 0
+      bottom 0
+      left 0
+      right 0

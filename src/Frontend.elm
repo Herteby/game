@@ -1,26 +1,33 @@
 module Frontend exposing (app, init)
 
+import AltMath.Vector2 exposing (Vec2)
 import Browser.Dom
 import Browser.Events
-import Character
-import Css
-import Dict
+import Character exposing (Character)
+import Dict exposing (Dict)
+import Env
+import FontAwesome.Icon exposing (Icon)
+import FontAwesome.Solid as Solid
+import FontAwesome.Styles
 import GamePage
 import Hash
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes as Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Html.Keyed
 import Html.Lazy exposing (..)
 import Json.Decode as Decode
 import Lamdera
 import LoginPage
-import Misc exposing (none)
 import Playground.Advanced as Playground
 import Process
 import RegisterPage
+import Set
 import Task
 import Types exposing (..)
+import UI exposing (none, textSpan)
+import UI.Button as Button exposing (Action(..))
+import UI.Icon as Icon
 
 
 {-| Lamdera applications define 'app' instead of 'main'.
@@ -33,17 +40,27 @@ app =
     Lamdera.frontend
         { init =
             \_ _ ->
-                if devMode then
-                    devInit
+                case Env.mode of
+                    Env.Development ->
+                        devInit
 
-                else
-                    init
+                    Env.Production ->
+                        init
         , update = update
         , updateFromBackend = updateFromBackend
         , view =
             \model ->
                 { title = "Game"
-                , body = [ view model ]
+                , body =
+                    [ FontAwesome.Styles.css
+                    , node "link"
+                        [ rel "stylesheet"
+                        , type_ "text/css"
+                        , href "style.css"
+                        ]
+                        []
+                    , view model
+                    ]
                 }
         , subscriptions = subscriptions
         , onUrlChange = \_ -> Noop
@@ -75,7 +92,7 @@ devInit =
                     { username = ""
                     , loggedIn = Nothing
                     , passwordHash = Hash.fromString ""
-                    , character = char
+                    , character = { char | coords = { x = 10 ^ 0, y = 0 } }
                     }
                     Dict.empty
                 )
@@ -112,8 +129,8 @@ update msg model =
 
                             ( cx, cy ) =
                                 newMemory.player.coords
-                                    |> (\( x, y ) ->
-                                            ( round <| x / (64 * 16), round <| y / (64 * 16) )
+                                    |> (\{ x, y } ->
+                                            ( round <| x / (64 * 16) - 0.5, round <| y / (64 * 16) - 0.5 )
                                        )
 
                             cmd_ =
@@ -130,9 +147,9 @@ update msg model =
                             ]
                         )
                             |> checkChunk cx cy
-                            |> checkChunk (cx - 1) cy
-                            |> checkChunk cx (cy - 1)
-                            |> checkChunk (cx - 1) (cy - 1)
+                            |> checkChunk (cx + 1) cy
+                            |> checkChunk cx (cy + 1)
+                            |> checkChunk (cx + 1) (cy + 1)
                    )
 
         ( KeyDown code, GamePage submodel ) ->
@@ -161,6 +178,9 @@ update msg model =
 
         ( ChatInput message, GamePage submodel ) ->
             ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | chatInput = Just message })) }, Cmd.none )
+
+        ( TogglePlayerList, GamePage submodel ) ->
+            ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | showPlayerList = not mem.showPlayerList })) }, Cmd.none )
 
         ( RemoveMessage i, GamePage submodel ) ->
             ( { model
@@ -275,6 +295,26 @@ updateFromBackend msg model =
             , Process.sleep 30000 |> Task.perform (\_ -> RemoveMessage mem.messageI)
             )
 
+        ( OtherLoggedIn username, GamePage game ) ->
+            let
+                ( _, mem ) =
+                    Playground.get game
+            in
+            ( { model
+                | page =
+                    GamePage <|
+                        Playground.edit
+                            (\_ memory ->
+                                { memory
+                                    | messages = ( memory.messageI, SystemMessage (username ++ " logged in") ) :: memory.messages |> List.take 10
+                                    , messageI = memory.messageI + 1
+                                }
+                            )
+                            game
+              }
+            , Process.sleep 30000 |> Task.perform (\_ -> RemoveMessage mem.messageI)
+            )
+
         _ ->
             ( model, Cmd.none )
 
@@ -282,8 +322,7 @@ updateFromBackend msg model =
 view : FrontendModel -> Html FrontendMsg
 view model =
     div [ class "main" ]
-        [ Html.node "style" [] [ text Css.css ]
-        , case model.page of
+        [ case model.page of
             LoginPage loginmodel ->
                 LoginPage.view loginmodel |> Html.map LoginMsg
 
@@ -299,6 +338,11 @@ view model =
                     [ GamePage.game.view gamemodel
                     , lazy2 chat memory.messages memory.chatInput
                     , viewCoords memory.player.coords
+                    , if memory.showPlayerList then
+                        playerList memory.others
+
+                      else
+                        none
                     ]
 
             StartPage ->
@@ -306,41 +350,99 @@ view model =
         ]
 
 
-viewCoords coords =
+viewCoords : Vec2 -> Html msg
+viewCoords { x, y } =
     div [ class "coords" ]
-        [ div [] [ text ("x: " ++ (Tuple.first >> round >> String.fromInt) coords) ]
-        , div [] [ text ("y: " ++ (Tuple.second >> round >> String.fromInt) coords) ]
+        [ div [] [ text ("x: " ++ String.fromInt (round x)) ]
+        , div [] [ text ("y: " ++ String.fromInt (round y)) ]
         ]
 
 
+chat : List ( Int, Message ) -> Maybe String -> Html FrontendMsg
 chat messages chatInput =
-    div [ class "chat" ]
-        [ messages
-            |> List.reverse
-            |> List.map
-                (\( i, m ) ->
-                    ( String.fromInt i
-                    , div [ class "message" ]
-                        [ div [ class "avatar", style "background-image" ("url(" ++ Character.url m.skin ++ ")") ] []
-                        , div []
-                            [ div [ class "username" ] [ text m.username ]
-                            , div [] [ text m.message ]
-                            ]
-                        ]
-                    )
-                )
-            |> Html.Keyed.node "div" []
-        , case chatInput of
-            Just message ->
-                input [ value message, onInput ChatInput, id "chatInput" ] []
+    div [ class "bottomLeft" ]
+        [ div [ class "chat" ]
+            [ messages
+                |> List.reverse
+                |> List.map
+                    (\( i, m ) ->
+                        ( String.fromInt i
+                        , case m of
+                            UserMessage { username, skin, message } ->
+                                div [ class "message" ]
+                                    [ div [ class "avatar", style "background-image" ("url(" ++ Character.url skin ++ ")") ] []
+                                    , div []
+                                        [ div [ class "username" ] [ text username ]
+                                        , div [] [ text message ]
+                                        ]
+                                    ]
 
-            Nothing ->
-                div [ class "chatHint" ] [ text "Press enter to chat" ]
+                            SystemMessage message ->
+                                div [ class "system message" ]
+                                    [ text message
+                                    ]
+                        )
+                    )
+                |> Html.Keyed.node "div" []
+            , case chatInput of
+                Just message ->
+                    input
+                        [ class "chatInput"
+                        , value message
+                        , onInput ChatInput
+                        , id "chatInput"
+                        ]
+                        []
+
+                Nothing ->
+                    div [ class "chatHint" ] [ text "Press enter to chat" ]
+            ]
+        , uiButton Solid.users "Open player list" TogglePlayerList
         ]
 
 
+uiButton : Icon -> String -> msg -> Html msg
+uiButton icon title msg =
+    button
+        [ class "uiButton"
+        , onClick msg
+        , Attributes.title title
+        ]
+        [ Icon.view [] icon ]
+
+
+playerList : Dict String Character -> Html FrontendMsg
+playerList players =
+    div [ class "overlay", onClick TogglePlayerList ]
+        [ div [ class "modal" ]
+            [ div [ class "header" ] [ textSpan "Players" ]
+            , div [ class "body" ]
+                (Dict.toList players
+                    |> List.map
+                        (\( username, character ) ->
+                            div [ class "player" ]
+                                [ div [ class "avatar", style "background-image" ("url(" ++ Character.url character.skin ++ ")") ] []
+                                , text username
+                                ]
+                        )
+                )
+            ]
+        ]
+
+
+startView : Html FrontendMsg
 startView =
     div [ class "startPage" ]
-        [ button [ onClick GotoLogin, class "big" ] [ text "Log in" ]
-        , button [ onClick GotoRegister, class "big" ] [ text "Register" ]
+        [ Button.primary
+            { action = Enabled GotoLogin
+            , text = "Log in"
+            , icon = Just Solid.signInAlt
+            , attrs = []
+            }
+        , Button.primary
+            { action = Enabled GotoRegister
+            , text = "Register"
+            , icon = Just Solid.userPlus
+            , attrs = []
+            }
         ]

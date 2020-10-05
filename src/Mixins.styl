@@ -1,0 +1,53 @@
+$blue = #4d7cff
+$green = #18b976
+$yellow = #f2ca31
+$orange = #f27b31
+$red = #d24314
+$white = #ffffff
+$extraLightGrey = #f3f5f7
+$lightGrey = #edf0f3
+$grey = #d0d0d0
+$darkGrey = #888888
+$charcoal = #222222
+
+$inputHeight = 40px
+
+rounded()
+  border-radius 6px
+
+shadow(size, opacity, inside = false, color = black)
+  if inside
+    box-shadow inset 0 0 size*1px alpha(color, opacity/2),
+    inset 0px size*0.5px size*1px alpha(color, opacity/2)
+  else
+    box-shadow 0 0 size*1px alpha(color, opacity/2),
+    0px size*0.5px size*1px alpha(color, opacity/2)
+
+interactive()
+  user-select none
+  cursor pointer
+  &:hover
+    background-image linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.05))
+  &:active
+    shadow(8px, 0.1, inset)
+
+row(spacing)
+  display flex
+  flex-direction row
+  & > *:not(:last-child)
+    margin-right spacing
+
+column(spacing)
+  display flex
+  flex-direction column
+  & > *:not(:last-child)
+    margin-bottom spacing
+    
+@keyframes fadeIn
+  from
+    opacity 0
+
+@keyframes popUp
+  from
+    opacity 0
+    transform scale(0.8)

@@ -1,8 +1,8 @@
 module Evergreen.Migrate.V9 exposing (..)
 
 import Dict
-import Evergreen.Type.V7 as Old
-import Evergreen.Type.V9 as New
+import Evergreen.V7.Types as Old
+import Evergreen.V9.Types as New
 import Lamdera.Migrations exposing (..)
 
 

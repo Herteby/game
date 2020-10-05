@@ -4,12 +4,9 @@ import Character exposing (Character)
 import Dict exposing (Dict)
 import Hash exposing (Hash)
 import Lamdera exposing (ClientId)
-import Playground
-import World exposing (Chunk)
-
-
-devMode =
-    False
+import Matrix exposing (Matrix)
+import Playground exposing (Game)
+import Random exposing (Seed)
 
 
 type alias FrontendModel =
@@ -21,7 +18,7 @@ type Page
     = StartPage
     | LoginPage LoginModel
     | RegisterPage RegisterModel
-    | GamePage (Playground.Game Memory)
+    | GamePage (Game Memory)
 
 
 type alias Memory =
@@ -31,11 +28,13 @@ type alias Memory =
     , messages : List ( Int, Message )
     , chatInput : Maybe String
     , messageI : Int
+    , showPlayerList : Bool
     }
 
 
-type alias Message =
-    { username : String, skin : Int, message : String }
+type Message
+    = SystemMessage String
+    | UserMessage { username : String, skin : Int, message : String }
 
 
 type Request a
@@ -66,6 +65,7 @@ type FrontendMsg
     | KeyDown String
     | ChatInput String
     | ChatSubmit
+    | TogglePlayerList
     | RemoveMessage Int
     | Noop
 
@@ -85,7 +85,7 @@ type BackendMsg
 
 type ToFrontend
     = LoggedIn Account (Dict String Character)
-    | OtherLoggedIn Int String
+    | OtherLoggedIn String
     | CheckNameResponse Bool
     | WrongUsernameOrPassword
     | UsernameAlreadyExists
@@ -126,3 +126,78 @@ type LoginMsg
     = LoginUsername String
     | LoginPassword String
     | Submit
+
+
+type alias Chunk =
+    { textures : List ( Terrain, String )
+    , terrain : Matrix Terrain
+    , objects : List (List (Maybe Object))
+    }
+
+
+type Terrain
+    = Water
+    | Beach
+    | Dirt
+    | DirtDark
+    | Grass
+    | GrassDark
+    | GrassDry
+    | Snow
+    | Volcanic
+    | Magma
+    | Pond
+
+
+type alias Environment =
+    { height : Float
+    , temp : Float
+    , humidity : Float
+    , foliage : Float
+    , volcanism : Float
+    , seed : Seed
+    , x : Int
+    , y : Int
+    }
+
+
+type Object
+    = Tree TreeColor TreeVariant
+    | Conifer ConiferSnow ConiferVariant
+    | DeadTree DeadTreeVariant
+    | Shell Int
+    | Flower Int
+
+
+type TreeVariant
+    = T1
+    | T2
+    | T3
+    | T4
+
+
+type TreeColor
+    = Green
+    | Yellow
+    | Orange
+
+
+type ConiferVariant
+    = C1
+    | C2
+    | C3
+    | C4
+    | C5
+
+
+type DeadTreeVariant
+    = D1
+    | D2
+    | D3
+    | D4
+    | D5
+
+
+type ConiferSnow
+    = NoSnow
+    | WithSnow

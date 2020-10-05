@@ -1,14 +1,16 @@
 module RegisterPage exposing (..)
 
 import Character
+import FontAwesome.Solid as Solid
 import Hash
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Lamdera
-import Misc exposing (attrIf, none)
 import Rumkin exposing (RumkinResult, Strength(..))
 import Types exposing (..)
+import UI exposing (attrIf, none)
+import UI.Button as Button exposing (Action(..))
 
 
 init : RegisterModel
@@ -75,7 +77,7 @@ view model =
         Html.form [ class "form", onSubmit Next ]
             [ label []
                 [ text "Username"
-                , input [ onInput InputUsername, value model.username ] []
+                , input [ class "input", onInput InputUsername, value model.username ] []
                 ]
             , if model.failed then
                 text "Username already taken"
@@ -85,7 +87,8 @@ view model =
             , label []
                 [ text "Password"
                 , input
-                    [ onInput InputPassword
+                    [ class "input"
+                    , onInput InputPassword
                     , value model.password
                     , type_ "password"
                     ]
@@ -99,7 +102,8 @@ view model =
             , label []
                 [ text "Repeat password"
                 , input
-                    [ onInput InputPassword2
+                    [ class "input"
+                    , onInput InputPassword2
                     , onBlur Blurred
                     , value model.password2
                     , type_ "password"
@@ -111,22 +115,33 @@ view model =
 
               else
                 text ""
-            , button [ attrIf (model.password /= model.password2 || stats.strength == VeryWeak) (class "disabled") ]
-                [ text "Next" ]
+            , Button.primary
+                { action =
+                    if model.password /= model.password2 || stats.strength == VeryWeak then
+                        Disabled
+
+                    else
+                        Enabled Next
+                , text = "Next"
+                , icon = Just Solid.check
+                , attrs = []
+                }
             ]
 
     else
         div [ class "main" ]
             [ characterPicker model.character
-            , button
-                [ class "big"
-                , if model.character == Nothing then
-                    class "disabled"
+            , Button.primary
+                { action =
+                    if model.character == Nothing then
+                        Disabled
 
-                  else
-                    onClick Register
-                ]
-                [ text "Enter world" ]
+                    else
+                        Enabled Register
+                , text = "Enter world"
+                , icon = Just Solid.signInAlt
+                , attrs = []
+                }
             ]
 
 

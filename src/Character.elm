@@ -1,12 +1,13 @@
 module Character exposing (..)
 
+import AltMath.Vector2 as Vec2 exposing (Vec2)
 import Playground exposing (Keyboard)
 import Playground.Extra as Playground
 import Set
 
 
 type alias Character =
-    { coords : ( Float, Float )
+    { coords : Vec2
     , direction : Direction
     , moving : Bool
     , skin : Int
@@ -16,7 +17,7 @@ type alias Character =
 create : Int -> Maybe Character
 create skin =
     if List.member skin skinList then
-        Just { coords = ( 0, 0 ), direction = Down, moving = False, skin = skin }
+        Just { coords = { x = 0, y = 0 }, direction = Down, moving = False, skin = skin }
 
     else
         Nothing
@@ -40,10 +41,7 @@ update { keyboard, time } { player, chatInput } =
 
     else
         let
-            ( x, y ) =
-                player.coords
-
-            ( vx, vy ) =
+            kb =
                 toXY keyboard
 
             d =
@@ -58,25 +56,24 @@ update { keyboard, time } { player, chatInput } =
         in
         { player
             | coords =
-                ( x + (vx * speed_ * d)
-                , y + (vy * speed_ * d)
-                )
+                Vec2.scale (speed_ * d) kb
+                    |> Vec2.add player.coords
             , direction =
-                if vy > 0 then
+                if kb.y > 0 then
                     Up
 
-                else if vy < 0 then
+                else if kb.y < 0 then
                     Down
 
-                else if vx < 0 then
+                else if kb.x < 0 then
                     Left
 
-                else if vx > 0 then
+                else if kb.x > 0 then
                     Right
 
                 else
                     player.direction
-            , moving = toXY keyboard /= ( 0, 0 )
+            , moving = toXY keyboard /= { x = 0, y = 0 }
         }
 
 
@@ -86,8 +83,8 @@ url skin =
 
 
 tile : Int -> Int -> Playground.Shape
-tile skin =
-    Playground.tile 26 36 (url skin)
+tile skin frame =
+    Playground.tile 26 36 (url skin) frame
 
 
 render : Playground.Time -> Character -> Playground.Shape
@@ -127,14 +124,14 @@ render time char =
                 row + 1
     in
     tile char.skin frame
-        |> Playground.move (Tuple.first char.coords) (Tuple.second char.coords)
+        |> Playground.move char.coords.x char.coords.y
 
 
 speed =
     0.2
 
 
-toXY : Keyboard -> ( Float, Float )
+toXY : Keyboard -> Vec2
 toXY keyboard =
     let
         x =
@@ -166,10 +163,10 @@ toXY keyboard =
                   )
     in
     if x /= 0 && y /= 0 then
-        ( x / squareRootOfTwo, y / squareRootOfTwo )
+        { x = x / squareRootOfTwo, y = y / squareRootOfTwo }
 
     else
-        ( x, y )
+        { x = x, y = y }
 
 
 squareRootOfTwo : Float

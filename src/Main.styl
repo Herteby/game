@@ -1,0 +1,177 @@
+@import "Mixins.styl"
+@import "UI.styl"
+@import "UI/Button.styl"
+html
+  height 100%
+
+body
+  background $charcoal
+  color $white
+  margin 0
+  overflow hidden
+  font-family sans-serif
+  height 100%
+  display flex
+  flex-direction column
+  font-size 16px
+
+body > div:last-child
+  right 5px !important
+  top 5px !important
+  left unset !important
+  bottom unset !important
+  
+.input
+  rounded()
+  border none
+  height $inputHeight
+  padding 0 10px
+  font-size 16px
+
+.main 
+  column(0px)
+  align-items center
+  justify-content center
+  flex-grow 1
+
+.startPage 
+  column(10px)
+
+.form 
+  display flex
+  flex-direction column
+  background #333
+  border-radius 10px
+  padding 20px
+  width 200px
+  margin auto
+  label 
+    display flex
+    flex-direction column
+    margin-bottom 15px
+
+.characterPicker 
+  width 900px
+
+.character 
+  width 78px
+  height 120px
+  border none
+  background-color transparent
+  outline none
+  background-size 234px 432px
+  background-position  center top
+  image-rendering pixelated
+  margin 10px
+  border-radius 10px
+  cursor pointer
+  &:hover, &.selected
+    animation walk 0.5s linear infinite
+  &.selected
+    background-color alpha(#344148,0.5)
+    
+@keyframes walk 
+  0% 
+    background-position center top
+  25% 
+    background-position center top
+  25.0001%
+    background-position left top
+  50%
+    background-position left top
+  50.0001%
+    background-position center top
+  75%
+    background-position center top
+  75.0001%
+    background-position right top
+  100%
+    background-position right top
+
+
+.uiButton
+  height 26px
+  background rgba(0,0,0,0.3)
+  border none
+  color $white
+  interactive()
+  rounded()
+  row(0px)
+  align-items center
+
+  
+.bottomLeft
+  position fixed
+  bottom 10px
+  left 10px
+  row(5px)
+  align-items flex-end
+  
+.chat 
+  display flex
+  flex-direction column
+  width 400px
+  rounded()
+  padding 5px
+  background rgba(0,0,0,0.3)
+  color $white
+  text-shadow 1px 1px #000
+  font-size 14px
+  z-index 9999
+  .message
+    display flex
+    padding 5px 0
+    &.system
+      color $yellow
+  .username 
+   font-weight bold
+  .avatar 
+    width 26px
+    height 26px
+    background-position center top
+    margin-right 5px
+    flex-shrink 0
+  .chatInput 
+    background rgba(0,0,0,0.5)
+    color $white
+    font-size 14px
+    border none
+    padding 5px
+  .chatHint 
+    color rgba(255,255,255,0.6)
+
+.coords 
+  position fixed
+  top 10px
+  left 10px
+  text-shadow 1px 1px #000
+
+.overlay
+  position absolute
+  top 0
+  bottom 0
+  left 0
+  right 0
+  display flex
+  justify-content center
+  align-items center
+  
+.modal
+  background rgba(0,0,0,0.5)
+  rounded()
+  padding 10px
+  .header
+    font-size 20px
+
+.player
+  row(10px)
+  align-items center
+  padding 5px
+  .avatar
+    width 52px
+    height 52px
+    background-position center top
+    image-rendering pixelated
+    margin-right 5px
+    flex-shrink 0
+    background-size 156px 288px

@@ -1,0 +1,31 @@
++prefix-classes('UI__')
+
+  .spacer
+    flex-grow 1
+    margin 0 !important
+    padding 0 !important
+    
+  .grid
+    display grid
+    white-space nowrap
+    > div
+      display flex
+      padding 5px 10px
+      &:last-child
+        width 100%
+    &.lined > div:not(.last)
+      border-bottom 1px solid $lightGrey
+      
+  .showMore > summary
+    interactive()
+    padding 5px
+    list-style none
+    &::-webkit-details-marker
+      display none
+    .caret
+      color $primaryDark
+  .showMore[open] > summary .caret svg
+    transform rotate(90deg)
+    
+  .interactive
+    interactive()

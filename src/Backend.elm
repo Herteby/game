@@ -2,6 +2,7 @@ module Backend exposing (app)
 
 import Character
 import Dict
+import Env
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra as List
 import Types exposing (..)
@@ -68,14 +69,15 @@ updateFromFrontend sessionId clientId msg model =
                                     |> List.filterMap .loggedIn
                                     |> List.map
                                         (\id ->
-                                            Lamdera.sendToFrontend id (OtherLoggedIn character.skin account.username)
+                                            Lamdera.sendToFrontend id (OtherLoggedIn account.username)
                                         )
                         in
                         ( { model
                             | accounts = account :: model.accounts
                           }
-                        , Cmd.batch
-                            (Lamdera.sendToFrontend clientId (LoggedIn account others) :: notifyOthers)
+                        , Cmd.batch <|
+                            Lamdera.sendToFrontend clientId (LoggedIn account others)
+                                :: notifyOthers
                         )
 
                     Nothing ->
@@ -110,11 +112,13 @@ updateFromFrontend sessionId clientId msg model =
                                 |> List.filter (\id -> id /= clientId)
                                 |> List.map
                                     (\id ->
-                                        Lamdera.sendToFrontend id (OtherLoggedIn account.character.skin account.username)
+                                        Lamdera.sendToFrontend id (OtherLoggedIn account.username)
                                     )
                     in
                     ( { model | accounts = List.setIf match account_ model.accounts }
-                    , Lamdera.sendToFrontend clientId (LoggedIn account_ others)
+                    , Cmd.batch <|
+                        Lamdera.sendToFrontend clientId (LoggedIn account_ others)
+                            :: notifyOthers
                     )
 
                 Nothing ->
@@ -156,11 +160,12 @@ updateFromFrontend sessionId clientId msg model =
                         chunk =
                             World.generateChunk x y
                     in
-                    ( if devMode then
-                        model
+                    ( case Env.mode of
+                        Env.Development ->
+                            model
 
-                      else
-                        { model | chunks = Dict.insert ( x, y ) chunk model.chunks }
+                        Env.Production ->
+                            { model | chunks = Dict.insert ( x, y ) chunk model.chunks }
                     , Lamdera.sendToFrontend clientId (ChunkResponse x y chunk)
                     )
 
@@ -172,13 +177,13 @@ updateFromFrontend sessionId clientId msg model =
                         |> List.filterMap .loggedIn
                         |> List.map
                             (\id ->
-                                Lamdera.sendToFrontend id
-                                    (GotMessage
-                                        { username = sender.username
-                                        , skin = sender.character.skin
-                                        , message = message
-                                        }
-                                    )
+                                Lamdera.sendToFrontend id <|
+                                    GotMessage <|
+                                        UserMessage
+                                            { username = sender.username
+                                            , skin = sender.character.skin
+                                            , message = message
+                                            }
                             )
                         |> Cmd.batch
 

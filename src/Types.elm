@@ -2,12 +2,15 @@ module Types exposing (..)
 
 import AltMath.Vector2 exposing (Vec2)
 import Dict exposing (Dict)
-import Hash exposing (Hash)
 import Lamdera exposing (ClientId)
 import Matrix exposing (Matrix)
 import Playground exposing (Game)
 import Random exposing (Seed)
 import Time
+
+
+type Hash
+    = Hash String
 
 
 type alias FrontendModel =

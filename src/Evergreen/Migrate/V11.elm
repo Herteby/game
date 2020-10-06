@@ -21,9 +21,18 @@ backendModel { accounts } =
                 accounts
                     |> List.map
                         (\a ->
-                            { a
-                                | character = a.character |> (\c -> { c | coords = { x = 0, y = 0 } })
-                                , loggedIn = Nothing
+                            { username = a.username
+                            , passwordHash =
+                                case a.passwordHash of
+                                    Old.Hash str ->
+                                        New.Hash str
+                            , character =
+                                { coords = { x = 0, y = 0 }
+                                , direction = New.Down
+                                , speed = New.Standing
+                                , skin = a.character.skin
+                                }
+                            , loggedIn = a.loggedIn
                             }
                         )
           , chunks = Dict.empty

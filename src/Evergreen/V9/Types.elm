@@ -1,11 +1,35 @@
 module Evergreen.V9.Types exposing (..)
 
-import Character exposing (Character)
+import AltMath.Vector2 exposing (Vec2)
 import Dict exposing (Dict)
-import Hash exposing (Hash)
 import Lamdera exposing (ClientId)
 import Matrix exposing (Matrix)
 import Playground
+
+
+type Hash
+    = Hash String
+
+
+type alias Character =
+    { coords : Vec2
+    , direction : Direction
+    , speed : Speed
+    , skin : Int
+    }
+
+
+type Direction
+    = Up
+    | Down
+    | Left
+    | Right
+
+
+type Speed
+    = Standing
+    | Walking
+    | Sprinting
 
 
 type Terrain

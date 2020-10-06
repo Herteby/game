@@ -1,29 +1,53 @@
 module Evergreen.V11.Types exposing (..)
 
-import Evergreen.V11.Character
+import AltMath.Vector2
 import Dict
-import Evergreen.V11.Hash
+import Evergreen.V11.Playground
 import Lamdera
 import Matrix
-import Evergreen.V11.Playground
 import Time
 
 
-type alias LoginModel = 
+type Hash
+    = Hash String
+
+
+type alias LoginModel =
     { username : String
     , password : String
     , failed : Bool
     }
 
 
-type alias RegisterModel = 
+type alias RegisterModel =
     { username : String
     , password : String
     , password2 : String
     , characterPicker : Bool
-    , character : (Maybe Int)
+    , character : Maybe Int
     , failed : Bool
     , blurred : Bool
+    }
+
+
+type Direction
+    = Up
+    | Down
+    | Left
+    | Right
+
+
+type Speed
+    = Standing
+    | Walking
+    | Sprinting
+
+
+type alias Character =
+    { coords : AltMath.Vector2.Vec2
+    , direction : Direction
+    , speed : Speed
+    , skin : Int
     }
 
 
@@ -75,18 +99,33 @@ type DeadTreeVariant
     | D5
 
 
+type FlowerColor
+    = FlowerRed
+    | FlowerYellow
+    | FlowerBlue
+    | FlowerPurple
+    | FlowerPink
+
+
+type FlowerVariant
+    = F1
+    | F2
+    | F3
+    | F4
+
+
 type Object
     = Tree TreeColor TreeVariant
     | Conifer ConiferSnow ConiferVariant
     | DeadTree DeadTreeVariant
     | Shell Int
-    | Flower Int
+    | Flower FlowerColor FlowerVariant
 
 
-type alias Chunk = 
-    { textures : (List (Terrain, String))
-    , terrain : (Matrix.Matrix Terrain)
-    , objects : (List (List (Maybe Object)))
+type alias Chunk =
+    { textures : List ( Terrain, String )
+    , terrain : Matrix.Matrix Terrain
+    , objects : List (List (Maybe Object))
     }
 
 
@@ -97,22 +136,22 @@ type Request a
 
 type Message
     = SystemMessage String
-    | UserMessage 
-    { username : String
-    , skin : Int
-    , message : String
-    }
+    | UserMessage
+        { username : String
+        , skin : Int
+        , message : String
+        }
 
 
-type alias Memory = 
-    { player : Evergreen.V11.Character.Character
-    , others : (Dict.Dict String Evergreen.V11.Character.Character)
-    , chunks : (Dict.Dict (Int, Int) (Request Chunk))
-    , messages : (List (Int, Message))
-    , chatInput : (Maybe String)
+type alias Memory =
+    { player : Character
+    , others : Dict.Dict String ( Character, AltMath.Vector2.Vec2 )
+    , chunks : Dict.Dict ( Int, Int ) (Request Chunk)
+    , messages : List ( Int, Message )
+    , chatInput : Maybe String
     , messageI : Int
     , showPlayerList : Bool
-    , lastUpdate : Time.Posix
+    , lastUpdate : ( Time.Posix, Character )
     }
 
 
@@ -128,17 +167,17 @@ type alias FrontendModel =
     }
 
 
-type alias Account = 
+type alias Account =
     { username : String
-    , passwordHash : Evergreen.V11.Hash.Hash
-    , character : Evergreen.V11.Character.Character
-    , loggedIn : (Maybe Lamdera.ClientId)
+    , passwordHash : Hash
+    , character : Character
+    , loggedIn : Maybe Lamdera.ClientId
     }
 
 
 type alias BackendModel =
-    { accounts : (List Account)
-    , chunks : (Dict.Dict (Int, Int) Chunk)
+    { accounts : List Account
+    , chunks : Dict.Dict ( Int, Int ) Chunk
     }
 
 
@@ -174,9 +213,9 @@ type FrontendMsg
 
 type ToBackend
     = CheckName String
-    | CreateAccount String Evergreen.V11.Hash.Hash Int
-    | Login String Evergreen.V11.Hash.Hash
-    | UpdatePlayer Evergreen.V11.Character.Character
+    | CreateAccount String Hash Int
+    | Login String Hash
+    | UpdatePlayer Character
     | SendMessage String
     | GetChunk Int Int
 
@@ -186,11 +225,11 @@ type BackendMsg
 
 
 type ToFrontend
-    = LoggedIn Account (Dict.Dict String Evergreen.V11.Character.Character)
+    = LoggedIn Account (Dict.Dict String Character)
     | OtherLoggedIn String
     | CheckNameResponse Bool
     | WrongUsernameOrPassword
     | UsernameAlreadyExists
-    | UpdateOtherPlayer String Evergreen.V11.Character.Character
+    | UpdateOtherPlayer String Character
     | GotMessage Message
     | ChunkResponse Int Int Chunk

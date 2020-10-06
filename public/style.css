@@ -197,6 +197,7 @@ html {
 body {
   background: url("background.jpg");
   background-size: cover;
+  image-rendering: pixelated;
   color: #fff;
   margin: 0;
   overflow: hidden;

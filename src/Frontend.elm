@@ -452,15 +452,9 @@ playerList players =
                         (\( username, ( character, coords ) ) ->
                             div [ class "player" ]
                                 [ div [ class "avatar", style "background-image" ("url(" ++ Character.url character.skin ++ ")") ] []
-                                , text username
-                                , div []
-                                    [ div [] [ text ("x: " ++ String.fromInt (round character.coords.x)) ]
-                                    , div [] [ text ("y: " ++ String.fromInt (round character.coords.y)) ]
-                                    ]
-                                , div []
-                                    [ div [] [ text ("x: " ++ String.fromInt (round coords.x)) ]
-                                    , div [] [ text ("y: " ++ String.fromInt (round coords.y)) ]
-                                    ]
+                                , textSpan username
+                                , textSpan ("x: " ++ String.fromInt (round character.coords.x))
+                                , textSpan ("y: " ++ String.fromInt (round character.coords.y))
                                 ]
                         )
                 )
@@ -471,16 +465,18 @@ playerList players =
 startView : Html FrontendMsg
 startView =
     div [ class "startPage" ]
-        [ Button.primary
-            { action = Enabled GotoLogin
-            , text = "Log in"
-            , icon = Just Solid.signInAlt
-            , attrs = []
-            }
-        , Button.primary
-            { action = Enabled GotoRegister
-            , text = "Register"
-            , icon = Just Solid.userPlus
-            , attrs = []
-            }
+        [ div [ class "form" ]
+            [ Button.primary
+                { action = Enabled GotoLogin
+                , text = "Log in"
+                , icon = Just Solid.signInAlt
+                , attrs = []
+                }
+            , Button.primary
+                { action = Enabled GotoRegister
+                , text = "Register"
+                , icon = Just Solid.userPlus
+                , attrs = []
+                }
+            ]
         ]

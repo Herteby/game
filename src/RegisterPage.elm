@@ -130,18 +130,25 @@ view model =
 
     else
         div [ class "main" ]
-            [ characterPicker model.character
-            , Button.primary
-                { action =
-                    if model.character == Nothing then
-                        Disabled
+            [ div [ class "form" ]
+                [ characterPicker model.character
+                , div
+                    [ style "display" "flex"
+                    , style "justify-content" "center"
+                    ]
+                    [ Button.primary
+                        { action =
+                            if model.character == Nothing then
+                                Disabled
 
-                    else
-                        Enabled Register
-                , text = "Enter world"
-                , icon = Just Solid.signInAlt
-                , attrs = []
-                }
+                            else
+                                Enabled Register
+                        , text = "Enter world"
+                        , icon = Just Solid.signInAlt
+                        , attrs = []
+                        }
+                    ]
+                ]
             ]
 
 

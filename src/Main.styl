@@ -5,7 +5,8 @@ html
   height 100%
 
 body
-  background $charcoal
+  background url("background.jpg")
+  background-size cover
   color $white
   margin 0
   overflow hidden
@@ -38,20 +39,19 @@ body > div:last-child
   column(10px)
 
 .form 
-  display flex
-  flex-direction column
-  background #333
-  border-radius 10px
+  column(15px)
+  background rgba(0,0,0,0.7)
+  rounded()
   padding 20px
-  width 200px
   margin auto
   label 
     display flex
     flex-direction column
-    margin-bottom 15px
 
 .characterPicker 
   width 900px
+  h2
+    text-align center
 
 .character 
   width 78px
@@ -176,7 +176,7 @@ body > div:last-child
     color $white
     text-shadow 1px 1px #000
     
-    
+.player
   row(10px)
   align-items center
   padding 5px

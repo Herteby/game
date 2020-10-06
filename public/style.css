@@ -119,7 +119,7 @@
 }
 .Button__primary {
   color: #fff;
-  background: #f27b31;
+  background: #18b976;
 }
 .Button__orange {
   color: #fff;
@@ -195,7 +195,8 @@ html {
   height: 100%;
 }
 body {
-  background: #222;
+  background: url("background.jpg");
+  background-size: cover;
   color: #fff;
   margin: 0;
   overflow: hidden;
@@ -238,19 +239,23 @@ body > div:last-child {
 .form {
   display: flex;
   flex-direction: column;
-  background: #333;
-  border-radius: 10px;
+  background: rgba(0,0,0,0.7);
+  border-radius: 6px;
   padding: 20px;
-  width: 200px;
   margin: auto;
+}
+.form > *:not(:last-child) {
+  margin-bottom: 15px;
 }
 .form label {
   display: flex;
   flex-direction: column;
-  margin-bottom: 15px;
 }
 .characterPicker {
   width: 900px;
+}
+.characterPicker h2 {
+  text-align: center;
 }
 .character {
   width: 78px;
@@ -369,10 +374,6 @@ body > div:last-child {
 }
 .namePlates {
   pointer-events: none;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 5px;
 }
 .namePlates > div {
   position: relative;
@@ -386,10 +387,16 @@ body > div:last-child {
   color: #fff;
   text-shadow: 1px 1px #000;
 }
-.namePlates > *:not(:last-child) {
+.player {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 5px;
+}
+.player > *:not(:last-child) {
   margin-right: 10px;
 }
-.namePlates .avatar {
+.player .avatar {
   width: 52px;
   height: 52px;
   background-position: center top;

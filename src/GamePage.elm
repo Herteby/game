@@ -3,7 +3,8 @@ module GamePage exposing (..)
 import AltMath.Vector2 as Vec2
 import Character
 import Dict exposing (Dict)
-import Playground exposing (Computer, Shape)
+import Html exposing (Html)
+import Playground exposing (Computer, Game, Shape)
 import Playground.Advanced as Playground
 import Terrain
 import Time
@@ -30,6 +31,11 @@ init account others =
             )
 
 
+game :
+    { init : ( Game Memory, Cmd Playground.Msg )
+    , view : Game Memory -> Html a
+    , update : Playground.Msg -> Game Memory -> ( Game Memory, Cmd Playground.Msg )
+    }
 game =
     let
         char =

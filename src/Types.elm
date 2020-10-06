@@ -34,6 +34,7 @@ type alias Memory =
     , messageI : Int
     , showPlayerList : Bool
     , lastUpdate : ( Time.Posix, Character )
+    , fps : List Int
     }
 
 

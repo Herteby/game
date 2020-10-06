@@ -26,6 +26,7 @@ init account others =
                     , messageI = 0
                     , showPlayerList = False
                     , lastUpdate = ( Time.millisToPosix 0, account.character )
+                    , fps = []
                     }
                 )
             )
@@ -55,6 +56,7 @@ game =
         , messageI = 0
         , showPlayerList = False
         , lastUpdate = ( Time.millisToPosix 0, char )
+        , fps = []
         }
 
 
@@ -113,4 +115,5 @@ updateGame computer memory =
     { memory
         | player = Character.update computer memory
         , others = Dict.map (\_ ( c, coords ) -> ( c, Character.interpolate computer.time c coords )) memory.others
+        , fps = 1000 // Playground.delta computer.time :: memory.fps |> List.take 60
     }

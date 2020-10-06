@@ -20,7 +20,7 @@ import Json.Decode as Decode
 import Lamdera
 import LoginPage
 import Maybe.Extra as Maybe
-import Playground
+import Playground exposing (Time)
 import Playground.Advanced as Playground
 import Process
 import RegisterPage
@@ -343,13 +343,13 @@ view model =
 
             GamePage gamemodel ->
                 let
-                    ( _, memory ) =
+                    ( computer, memory ) =
                         Playground.get gamemodel
                 in
                 div []
                     [ GamePage.game.view gamemodel
                     , lazy2 chat memory.messages memory.chatInput
-                    , viewCoords memory.player.coords
+                    , info memory
                     , namePlates memory.player memory.others
                     , if memory.showPlayerList then
                         playerList memory.others
@@ -363,11 +363,12 @@ view model =
         ]
 
 
-viewCoords : Vec2 -> Html msg
-viewCoords { x, y } =
+info : Memory -> Html msg
+info { fps, player } =
     div [ class "coords" ]
-        [ div [] [ text ("x: " ++ String.fromInt (round x)) ]
-        , div [] [ text ("y: " ++ String.fromInt (round y)) ]
+        [ div [] [ text <| "fps: " ++ (String.fromInt <| List.sum fps // List.length fps) ]
+        , div [] [ text ("x: " ++ String.fromInt (round player.coords.x)) ]
+        , div [] [ text ("y: " ++ String.fromInt (round player.coords.y)) ]
         ]
 
 

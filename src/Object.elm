@@ -185,85 +185,73 @@ render object =
 renderTree : TreeColor -> TreeVariant -> Shape
 renderTree color variant =
     let
-        sprite_ =
-            case variant of
-                T1 ->
-                    { xmin = 0, xmax = 3, ymin = 0, ymax = 4 }
-
-                T2 ->
-                    { xmin = 3, xmax = 6, ymin = 0, ymax = 4 }
-
-                T3 ->
-                    { xmin = 6, xmax = 9, ymin = 0, ymax = 4 }
-
-                T4 ->
-                    { xmin = 9, xmax = 12, ymin = 0, ymax = 4 }
-
-        sprite =
+        row =
             case color of
                 Green ->
-                    sprite_
+                    0
 
                 Yellow ->
-                    { sprite_ | ymin = 4, ymax = 8 }
+                    1
 
                 Orange ->
-                    { sprite_ | ymin = 8, ymax = 12 }
+                    2
 
-        coords =
-            { xmin = sprite.xmin * 32
-            , xmax = sprite.xmax * 32
-            , ymin = sprite.ymin * 32
-            , ymax = sprite.ymax * 32
-            }
+        column =
+            case variant of
+                T1 ->
+                    0
+
+                T2 ->
+                    1
+
+                T3 ->
+                    2
+
+                T4 ->
+                    3
     in
-    Playground.sprite "/objects/trees.png" coords
-        |> Playground.moveUp ((sprite.ymax - sprite.ymin - 2) * 32)
+    Playground.tile 96 128 "/objects/trees.png" (row * 4 + column)
+        |> Playground.moveUp (3 * 16)
 
 
 renderConifer : ConiferSnow -> ConiferVariant -> Shape
 renderConifer snow variant =
     let
-        sprite_ =
-            case variant of
-                C1 ->
-                    { xmin = 0, xmax = 3, ymin = 0, ymax = 5 }
-
-                C2 ->
-                    { xmin = 3, xmax = 6, ymin = 0, ymax = 5 }
-
-                C3 ->
-                    { xmin = 6, xmax = 9, ymin = 0, ymax = 5 }
-
-                C4 ->
-                    { xmin = 9, xmax = 12, ymin = 0, ymax = 5 }
-
-                C5 ->
-                    { xmin = 12, xmax = 15, ymin = 0, ymax = 5 }
-
-        sprite =
+        row =
             case snow of
                 NoSnow ->
-                    sprite_
+                    0
 
                 WithSnow ->
-                    { sprite_ | ymin = 5, ymax = 10 }
+                    1
 
-        coords =
-            { xmin = sprite.xmin * 32
-            , xmax = sprite.xmax * 32
-            , ymin = sprite.ymin * 32
-            , ymax = sprite.ymax * 32
-            }
+        column =
+            case variant of
+                C1 ->
+                    0
+
+                C2 ->
+                    1
+
+                C3 ->
+                    2
+
+                C4 ->
+                    3
+
+                C5 ->
+                    4
     in
-    Playground.sprite "/objects/conifers.png" coords
-        |> Playground.moveUp ((sprite.ymax - sprite.ymin - 2) * 32)
+    Playground.tile 96 160 "/objects/conifers.png" (row * 5 + column)
+        |> Playground.moveUp (4 * 16)
 
 
 renderDeadTree : DeadTreeVariant -> Shape
 renderDeadTree variant =
-    Playground.tile 96 128 "/objects/deadTrees.png" <|
-        case variant of
+    Playground.tile 96
+        128
+        "/objects/deadTrees.png"
+        (case variant of
             D1 ->
                 0
 
@@ -278,6 +266,8 @@ renderDeadTree variant =
 
             D5 ->
                 4
+        )
+        |> Playground.moveUp (3 * 16)
 
 
 renderShell : Int -> Shape

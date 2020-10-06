@@ -27,6 +27,7 @@
             "elm-explorations/webgl": "1.1.2",
             "justgook/alt-linear-algebra": "2.0.0",
             "justgook/elm-image": "4.0.0",
+            "justgook/webgl-shape": "2.0.2",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
             "ohanhi/keyboard": "2.0.1",

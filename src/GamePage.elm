@@ -4,6 +4,7 @@ import AltMath.Vector2 as Vec2
 import Character
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Minimap
 import Playground exposing (Computer, Game, Shape)
 import Playground.Advanced as Playground
 import Terrain

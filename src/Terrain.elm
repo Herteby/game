@@ -1,7 +1,5 @@
 module Terrain exposing (..)
 
-import List.Extra as List
-import Maybe.Extra as Maybe
 import Playground
 import Playground.Extra as Playground
 import Types exposing (..)

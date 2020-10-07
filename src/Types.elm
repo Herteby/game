@@ -35,6 +35,7 @@ type alias Memory =
     , showPlayerList : Bool
     , lastUpdate : ( Time.Posix, Character )
     , fps : List Int
+    , showMinimap : Bool
     }
 
 
@@ -91,7 +92,7 @@ type FrontendMsg
     | GotoRegister
     | KeyDown String
     | ChatInput String
-    | ChatSubmit
+    | ToggleMinimap
     | TogglePlayerList
     | RemoveMessage Int
     | Noop
@@ -159,6 +160,7 @@ type alias Chunk =
     { textures : List ( Terrain, String )
     , terrain : Matrix Terrain
     , objects : List (List (Maybe Object))
+    , minimap : String
     }
 
 

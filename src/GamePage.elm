@@ -28,6 +28,7 @@ init account others =
                     , showPlayerList = False
                     , lastUpdate = ( Time.millisToPosix 0, account.character )
                     , fps = []
+                    , showMinimap = False
                     }
                 )
             )
@@ -58,11 +59,12 @@ game =
         , showPlayerList = False
         , lastUpdate = ( Time.millisToPosix 0, char )
         , fps = []
+        , showMinimap = False
         }
 
 
 render : Computer -> Memory -> List Shape
-render computer { player, others, chunks } =
+render computer { player, others, chunks, showMinimap } =
     let
         terrain =
             chunks
@@ -108,6 +110,11 @@ render computer { player, others, chunks } =
                         Playground.scale 2
                             >> Playground.move (negate player.coords.x * 2) (negate player.coords.y * 2)
                    )
+           , if showMinimap then
+                Minimap.render chunks |> Playground.fade 0.8
+
+             else
+                Playground.square Playground.black 0
            ]
 
 
@@ -116,18 +123,5 @@ updateGame computer memory =
     { memory
         | player = Character.update computer memory
         , others = Dict.map (\_ ( c, coords ) -> ( c, Character.interpolate computer.time c coords )) memory.others
-        , chunks =
-            Dict.filter
-                (\( x, y ) _ ->
-                    let
-                        chunkVec =
-                            { x = toFloat x - 0.5, y = toFloat y - 0.5 }
-
-                        diff =
-                            Vec2.sub chunkVec (Vec2.scale (1 / World.chunkSize / Terrain.tileSize) memory.player.coords)
-                    in
-                    abs diff.x < 5 && abs diff.y < 5
-                )
-                memory.chunks
         , fps = 1000 // Playground.delta computer.time :: memory.fps |> List.take 60
     }

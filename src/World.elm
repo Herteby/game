@@ -4,6 +4,7 @@ import Image
 import List.Extra as List
 import Matrix exposing (Matrix)
 import Maybe.Extra as Maybe
+import Minimap
 import Object
 import Playground
 import Random exposing (Seed)
@@ -20,10 +21,10 @@ generateChunk : Int -> Int -> Chunk
 generateChunk x y =
     let
         terrain =
-            List.range (x * chunkSize) (x * chunkSize + chunkSize + 2)
+            List.range (x * chunkSize) (x * chunkSize + chunkSize + 1)
                 |> List.map
                     (\x_ ->
-                        List.range (y * chunkSize) (y * chunkSize + chunkSize + 2)
+                        List.range (y * chunkSize) (y * chunkSize + chunkSize + 1)
                             |> List.map
                                 (\y_ ->
                                     let
@@ -38,9 +39,12 @@ generateChunk x y =
             terrain
                 |> Matrix.fromLists
                 |> Maybe.withDefault Matrix.empty
+
+        matrix2 =
+            Matrix.map Tuple.first matrix
     in
     { textures = List.map (\t -> ( t, tilemap matrix t )) Terrain.list
-    , terrain = Matrix.map Tuple.first matrix
+    , terrain = matrix2
     , objects =
         terrain
             |> List.map
@@ -52,6 +56,7 @@ generateChunk x y =
                             |> Tuple.first
                     )
                 )
+    , minimap = Minimap.chunkImage matrix2
     }
 
 

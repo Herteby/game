@@ -184,6 +184,9 @@ update msg model =
         ( ChatInput message, GamePage submodel ) ->
             ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | chatInput = Just message })) }, Cmd.none )
 
+        ( ToggleMinimap, GamePage submodel ) ->
+            ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | showMinimap = not mem.showMinimap })) }, Cmd.none )
+
         ( TogglePlayerList, GamePage submodel ) ->
             ( { model | page = GamePage (submodel |> Playground.edit (\_ mem -> { mem | showPlayerList = not mem.showPlayerList })) }, Cmd.none )
 
@@ -412,6 +415,7 @@ chat messages chatInput =
                     div [ class "chatHint" ] [ text "Press enter to chat" ]
             ]
         , uiButton Solid.users "Open player list" TogglePlayerList
+        , uiButton Solid.map "Show map" ToggleMinimap
         ]
 
 

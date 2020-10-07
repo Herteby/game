@@ -32,13 +32,13 @@ generate { height, temp, humidity, volcanism } =
     else if height < 0.12 then
         Dirt
 
-    else if humidity > 0.5 then
+    else if humidity > 0.5 && volcanism < 0.1 then
         Pond
 
     else if humidity > 0.3 then
         GrassDark
 
-    else if humidity < -0.2 || humidity + temp < -0.1 then
+    else if humidity < -0.2 then
         GrassDry
 
     else

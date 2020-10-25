@@ -15,6 +15,7 @@ import Html.Events exposing (..)
 import Html.Keyed
 import Html.Lazy exposing (..)
 import Json.Decode as Decode
+import Keyboard.Key as Key
 import Lamdera
 import Minimap
 import Playground exposing (Computer, Keyboard, Screen, Shape)
@@ -37,7 +38,7 @@ init account others posix =
     ( { time = { now = Time.posixToMillis posix, delta = 0 }
       , screen = toScreen 600 600
       , visibility = Visible
-      , keyboard = emptyKeyboard
+      , keyboard = []
       , textures = { done = Dict.empty, loading = Set.empty }
       , entities = []
       , player = account.character
@@ -63,8 +64,7 @@ subscriptions model =
 
         Visible ->
             Sub.batch
-                [ Browser.Events.onKeyDown (Decode.field "code" Decode.string |> Decode.map KeyDown)
-                , Browser.Events.onKeyUp (Decode.map (KeyChanged False) (Decode.field "code" Decode.string))
+                [ Browser.Events.onKeyUp (Decode.field "keyCode" Decode.int |> Decode.map (Key.fromCode >> KeyUp))
                 , Browser.Events.onKeyDown
                     (Decode.field "repeat" Decode.bool
                         |> Decode.andThen
@@ -73,8 +73,8 @@ subscriptions model =
                                     Decode.fail ""
 
                                 else
-                                    Decode.field "code" Decode.string
-                                        |> Decode.map (KeyChanged True)
+                                    Decode.field "keyCode" Decode.int
+                                        |> Decode.map (Key.fromCode >> KeyDown)
                             )
                     )
                 , Browser.Events.onAnimationFrame Tick
@@ -86,6 +86,29 @@ subscriptions model =
 update : GameMsg -> GameModel -> ( GameModel, Cmd GameMsg )
 update msg model =
     case msg of
+        KeyDown key ->
+            if key == Key.Enter then
+                case model.chatInput of
+                    Just message ->
+                        ( { model | chatInput = Nothing, keyboard = [] }
+                        , if message == "" then
+                            Cmd.none
+
+                          else
+                            Lamdera.sendToBackend (SendMessage message)
+                        )
+
+                    Nothing ->
+                        ( { model | chatInput = Just "", keyboard = [] }
+                        , Browser.Dom.focus "chatInput" |> Task.attempt (always Noop2)
+                        )
+
+            else
+                ( { model | keyboard = key :: model.keyboard }, Cmd.none )
+
+        KeyUp key ->
+            ( { model | keyboard = List.filter ((/=) key) model.keyboard }, Cmd.none )
+
         GotViewport { viewport } ->
             ( { model | screen = toScreen viewport.width viewport.height }
             , Cmd.none
@@ -96,15 +119,10 @@ update msg model =
             , Cmd.none
             )
 
-        KeyChanged isDown key ->
-            ( { model | keyboard = updateKeyboard isDown key model.keyboard }
-            , Cmd.none
-            )
-
         VisibilityChanged vis ->
             ( { model
                 | time = { now = model.time.now, delta = 0 }
-                , keyboard = emptyKeyboard
+                , keyboard = []
               }
             , Cmd.none
             )
@@ -165,26 +183,6 @@ update msg model =
                 |> andThen (checkChunk (cx + 1) cy)
                 |> andThen (checkChunk cx (cy + 1))
                 |> andThen (checkChunk (cx + 1) (cy + 1))
-
-        KeyDown code ->
-            if code == "Enter" then
-                case model.chatInput of
-                    Just message ->
-                        ( { model | chatInput = Nothing }
-                        , if message == "" then
-                            Cmd.none
-
-                          else
-                            Lamdera.sendToBackend (SendMessage message)
-                        )
-
-                    Nothing ->
-                        ( { model | chatInput = Just "" }
-                        , Browser.Dom.focus "chatInput" |> Task.attempt (always Noop2)
-                        )
-
-            else
-                ( model, Cmd.none )
 
         ChatInput message ->
             ( { model | chatInput = Just message }, Cmd.none )
@@ -386,7 +384,7 @@ render game =
                         |> List.map (\( c, coords ) -> Character.render game.time c |> Playground.move coords.x coords.y)
                    )
                 |> Playground.group
-                |> (if game.keyboard.space then
+                |> (if List.member Key.Spacebar game.keyboard then
                         Playground.move (negate game.player.coords.x) (negate game.player.coords.y)
 
                     else
@@ -410,62 +408,6 @@ toScreen width height =
     , right = width / 2
     , bottom = -height / 2
     }
-
-
-emptyKeyboard : Keyboard
-emptyKeyboard =
-    { up = False
-    , down = False
-    , left = False
-    , right = False
-    , space = False
-    , enter = False
-    , shift = False
-    , backspace = False
-    , keys = Set.empty
-    }
-
-
-updateKeyboard : Bool -> String -> Keyboard -> Keyboard
-updateKeyboard isDown key keyboard =
-    let
-        keys =
-            if isDown then
-                Set.insert key keyboard.keys
-
-            else
-                Set.remove key keyboard.keys
-    in
-    case key of
-        "Space" ->
-            { keyboard | keys = keys, space = isDown }
-
-        "Enter" ->
-            { keyboard | keys = keys, enter = isDown }
-
-        "ShiftLeft" ->
-            { keyboard | keys = keys, shift = isDown }
-
-        "ShiftRight" ->
-            { keyboard | keys = keys, shift = isDown }
-
-        "Backspace" ->
-            { keyboard | keys = keys, backspace = isDown }
-
-        "ArrowUp" ->
-            { keyboard | keys = keys, up = isDown }
-
-        "ArrowDown" ->
-            { keyboard | keys = keys, down = isDown }
-
-        "ArrowLeft" ->
-            { keyboard | keys = keys, left = isDown }
-
-        "ArrowRight" ->
-            { keyboard | keys = keys, right = isDown }
-
-        _ ->
-            { keyboard | keys = keys }
 
 
 requestTexture : Set String -> TextureManager -> ( TextureManager, Cmd GameMsg )

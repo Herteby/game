@@ -1,6 +1,7 @@
 module Character exposing (..)
 
 import AltMath.Vector2 as Vec2 exposing (Vec2)
+import Keyboard.Key as Key exposing (Key)
 import Playground exposing (Computer, Keyboard, Time)
 import Playground.Extra as Playground
 import Set
@@ -46,7 +47,7 @@ skinList =
     List.range 1 45
 
 
-update : { a | keyboard : Keyboard, time : Time } -> Character -> Character
+update : { a | keyboard : List Key, time : Time } -> Character -> Character
 update { keyboard, time } player =
     let
         dir =
@@ -55,8 +56,20 @@ update { keyboard, time } player =
         d =
             time.delta |> toFloat |> clamp 0 60
 
+        sprint =
+            List.any
+                (\k ->
+                    case k of
+                        Key.Shift _ ->
+                            True
+
+                        _ ->
+                            False
+                )
+                keyboard
+
         speed_ =
-            if keyboard.shift then
+            if sprint then
                 speed * 3
 
             else
@@ -85,7 +98,7 @@ update { keyboard, time } player =
             if toXY keyboard == { x = 0, y = 0 } then
                 Standing
 
-            else if keyboard.shift then
+            else if sprint then
                 Sprinting
 
             else
@@ -176,17 +189,20 @@ speed =
     0.2
 
 
-toXY : Keyboard -> Vec2
+toXY : List Key -> Vec2
 toXY keyboard =
     let
+        isDown key =
+            List.member key keyboard
+
         x =
-            (if keyboard.right || Set.member "KeyD" keyboard.keys then
+            (if isDown Key.Right || isDown Key.D then
                 1
 
              else
                 0
             )
-                - (if keyboard.left || Set.member "KeyA" keyboard.keys then
+                - (if isDown Key.Left || isDown Key.A then
                     1
 
                    else
@@ -194,13 +210,13 @@ toXY keyboard =
                   )
 
         y =
-            (if keyboard.up || Set.member "KeyW" keyboard.keys then
+            (if isDown Key.Up || isDown Key.W then
                 1
 
              else
                 0
             )
-                - (if keyboard.down || Set.member "KeyS" keyboard.keys then
+                - (if isDown Key.Down || isDown Key.S then
                     1
 
                    else

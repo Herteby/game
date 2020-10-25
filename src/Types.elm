@@ -8,6 +8,7 @@ import Character exposing (Character)
 import Chunk exposing (Chunk)
 import Dict exposing (Dict)
 import Hash exposing (Hash)
+import Keyboard.Key exposing (Key)
 import Playground exposing (Keyboard, Screen, Time)
 import Playground.Internal exposing (TextureManager)
 import Time
@@ -71,7 +72,7 @@ type alias GameModel =
     { time : Time
     , screen : Screen
     , visibility : Visibility
-    , keyboard : Keyboard
+    , keyboard : List Key
     , textures : TextureManager
     , entities : List Entity
     , player : Character
@@ -88,13 +89,13 @@ type alias GameModel =
 
 
 type GameMsg
-    = KeyChanged Bool String
+    = KeyDown Key
+    | KeyUp Key
     | Tick Time.Posix
     | GotViewport Browser.Dom.Viewport
     | Resized Screen
     | VisibilityChanged Browser.Events.Visibility
     | GotTexture (Result ( String, Texture.Error ) ( String, Texture ))
-    | KeyDown String
     | ChatInput String
     | ToggleMinimap
     | TogglePlayerList

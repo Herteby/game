@@ -30,9 +30,10 @@ import WebGL.Texture exposing (Texture)
 
 
 {-| -}
-vertTriangle : Shader { a | i : Float } { b | uP : Vec2, uT : Vec4, vert0 : Vec2, vert1 : Vec2, vert2 : Vec2 } {}
+vertTriangle : Shader { a | i : Float } { b | uP : Vec2, uT : Vec4, z : Float, vert0 : Vec2, vert1 : Vec2, vert2 : Vec2 } {}
 vertTriangle =
     --http://in2gpu.com/2014/11/24/creating-a-triangle-in-opengl-shader/
+    -- 1 / (2 ^ 23 - 1)  = 0.000000119209304
     [glsl|
     precision mediump float;
     attribute float i;
@@ -41,6 +42,7 @@ vertTriangle =
     uniform vec2 vert2;
     uniform vec4 uT;
     uniform vec2 uP;
+    uniform float z;
     void main () {
      vec2 aP;
      if (i == 0.) {
@@ -50,7 +52,7 @@ vertTriangle =
      } else if (i == 2.) {
         aP = vert2;
      }
-     gl_Position = vec4(aP * mat2(uT) + uP, 0., 1.0);
+     gl_Position = vec4(aP * mat2(uT) + uP, z  * -1.19209304e-7, 1.0);
     }
     |]
 
@@ -60,7 +62,7 @@ vertTriangle =
 
 
 {-| -}
-vertSprite : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4, uUV : Vec4 } { uv : Vec2 }
+vertSprite : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4, uUV : Vec4, z : Float } { uv : Vec2 }
 vertSprite =
     [glsl|
             precision mediump float;
@@ -69,59 +71,63 @@ vertSprite =
             uniform vec2 uP;
             varying vec2 uv;
             uniform vec4 uUV;
+            uniform float z;
             vec2 edgeFix = vec2(0.0000001, -0.0000001);
             void main () {
                 vec2 aP_ = aP * .5 + 0.5;
                 uv = uUV.xy + (aP_ * uUV.zw) + edgeFix;
-                gl_Position = vec4(aP * mat2(uT) + uP, 0., 1.0);
+                gl_Position = vec4(aP * mat2(uT) + uP, z  * -1.19209304e-7, 1.0);
             }
         |]
 
 
 {-| -}
-vertImage : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4 } { uv : Vec2 }
+vertImage : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4, z : Float } { uv : Vec2 }
 vertImage =
     [glsl|
             precision mediump float;
             attribute vec2 aP;
             uniform vec4 uT;
             uniform vec2 uP;
+            uniform float z;
             varying vec2 uv;
             vec2 edgeFix = vec2(0.0000001, -0.0000001);
             void main () {
                 uv = aP * .5 + 0.5 + edgeFix;
-                gl_Position = vec4(aP * mat2(uT) + uP, 0., 1.0);
+                gl_Position = vec4(aP * mat2(uT) + uP, z  * -1.19209304e-7, 1.0);
             }
         |]
 
 
 {-| -}
-vertNone : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4 } {}
+vertNone : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4, z : Float } {}
 vertNone =
     [glsl|
         precision mediump float;
         attribute vec2 aP;
         uniform vec4 uT;
         uniform vec2 uP;
+        uniform float z;
         void main () {
-            gl_Position = vec4(aP * mat2(uT) + uP, 0., 1.0);
+            gl_Position = vec4(aP * mat2(uT) + uP, z * -1.19209304e-7, 1.0);
         }
     |]
 
 
 {-| -}
-vertRect : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4 } { uv : Vec2 }
+vertRect : Shader { a | aP : Vec2 } { b | uP : Vec2, uT : Vec4, z : Float } { uv : Vec2 }
 vertRect =
     [glsl|
             precision mediump float;
             attribute vec2 aP;
             uniform vec4 uT;
             uniform vec2 uP;
+            uniform float z;
             varying vec2 uv;
             vec2 edgeFix = vec2(0.0000001, -0.0000001);
             void main () {
                 uv = aP + edgeFix;
-                gl_Position = vec4(aP * mat2(uT) + uP, 0., 1.0);
+                gl_Position = vec4(aP * mat2(uT) + uP, z  * -1.19209304e-7, 1.0);
             }
         |]
 
@@ -135,6 +141,7 @@ vertTile :
             , spriteSize : Vec2
             , uP : Vec2
             , uT : Vec4
+            , z : Float
         }
         { uv : Vec2 }
 vertTile =
@@ -143,6 +150,7 @@ vertTile =
             attribute vec2 aP;
             uniform vec4 uT;
             uniform vec2 uP;
+            uniform float z;
             uniform float index;
             uniform vec2 spriteSize;
             uniform vec2 uImgSize;
@@ -150,11 +158,11 @@ vertTile =
             vec2 edgeFix = vec2(0.0000001, -0.0000001);
             void main () {
                 vec2 ratio = spriteSize / uImgSize;
-                float row = floor(uImgSize.y / spriteSize.y - 1.0) - floor(index * ratio.x);
-                float column = mod(index, uImgSize.x / spriteSize.x);
+                float row = (uImgSize.y / spriteSize.y - 1.0) - floor((index + 0.5) * ratio.x);
+                float column = floor(mod((index + 0.5), uImgSize.x / spriteSize.x));
                 vec2 offset = vec2(column, row) * ratio;
-                uv = (aP * .5 + 0.5) * ratio + offset + edgeFix;
-                gl_Position = vec4(aP * mat2(uT) + uP, 0., 1.0);
+                uv = (aP * 0.5 + 0.5) * ratio + offset + edgeFix;
+                gl_Position = vec4(aP * mat2(uT) + uP, z  * -1.19209304e-7, 1.0);
             }
         |]
 
@@ -177,6 +185,7 @@ fragImage =
             vec2 pixel = (floor(uv * uImgSize) + 0.5) / uImgSize;
             gl_FragColor = texture2D(uImg, pixel);
             gl_FragColor.a *= uA;
+            if(gl_FragColor.a <= 0.025) discard;
         }
     |]
 
@@ -193,6 +202,7 @@ fragImageColor =
         void main () {
             vec2 pixel = ((floor(uv * uImgSize) + 0.5) * 2.0 ) / uImgSize / 2.0;
             gl_FragColor = texture2D(uImg, pixel) * color;
+            if(gl_FragColor.a <= 0.025) discard;
         }
     |]
 
@@ -203,10 +213,9 @@ fragFill =
     [glsl|
         precision mediump float;
         uniform vec4 color;
-
         void main () {
             gl_FragColor = color;
-
+            if(gl_FragColor.a <= 0.025) discard;
         }
     |]
 
@@ -221,6 +230,7 @@ fragCircle =
         void main () {
             gl_FragColor = color;
             gl_FragColor.a *= smoothstep(0.01,0.04,1.-length(uv));
+            if(gl_FragColor.a <= 0.025) discard;
         }
     |]
 
@@ -239,9 +249,9 @@ fragNgon =
             float angle = 3.1415926535897932384626433832795 / n * 3.0;
             float a = atan(uv.x,uv.y) + angle;
             float b = 6.28319 / n;
-            float f = smoothstep(0.5,.5,cos(floor(.5 + a/b)*b-a)*length(uv));
             gl_FragColor = color;
-            gl_FragColor.a -= f;
+            gl_FragColor.a -= smoothstep(0.5, 0.5001, cos(floor(.5 + a/b)*b-a)*length(uv));
+            if(gl_FragColor.a <= 0.025) discard;
         }
     |]
 
@@ -295,6 +305,7 @@ fragImageSaturation =
         void main () {
             gl_FragColor = texture2D(uImg, uv);
             gl_FragColor.xyz=saturation(gl_FragColor.xyz, adjustment);
+            if(gl_FragColor.a <= 0.025) discard;
         }
     |]
 
@@ -302,6 +313,7 @@ fragImageSaturation =
 rotSprite =
     --https://discover.therookies.co/2019/08/13/unity-masterclass-how-to-set-up-your-project-for-pixel-perfect-retro-8-bit-games/
     --https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite
+    --https://github.com/libretro/glsl-shaders/blob/master/scalenx/shaders/scale2x.glsl
     [glsl|
         precision mediump float;
         varying vec2 uv;
@@ -311,6 +323,7 @@ rotSprite =
         void main () {
             vec2 pixel = (floor(uv * uImgSize) + 0.5) / uImgSize;
             gl_FragColor = texture2D(uImg, pixel);
+            if(gl_FragColor.a <= 0.025) discard;
 
         }
     |]

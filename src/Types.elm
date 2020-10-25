@@ -2,12 +2,17 @@ module Types exposing (..)
 
 import Account exposing (Account)
 import AltMath.Vector2 exposing (Vec2)
+import Browser.Dom
+import Browser.Events exposing (Visibility)
 import Character exposing (Character)
 import Chunk exposing (Chunk)
 import Dict exposing (Dict)
 import Hash exposing (Hash)
-import Playground exposing (Game)
+import Playground exposing (Keyboard, Screen, Time)
+import Playground.Internal exposing (TextureManager)
 import Time
+import WebGL exposing (Entity)
+import WebGL.Texture as Texture exposing (Texture)
 
 
 type alias FrontendModel =
@@ -19,7 +24,7 @@ type Page
     = StartPage
     | LoginPage LoginModel
     | RegisterPage RegisterModel
-    | GamePage (Game Memory)
+    | GamePage GameModel
 
 
 type alias BackendModel =
@@ -34,6 +39,7 @@ type FrontendMsg
     | GameMsg GameMsg
     | GotoLogin
     | GotoRegister
+    | GotTime Account (Dict String Character) Time.Posix
     | Noop
 
 
@@ -61,22 +67,33 @@ type ToFrontend
     | ChunkResponse Int Int Chunk
 
 
-type alias Memory =
-    { player : Character
+type alias GameModel =
+    { time : Time
+    , screen : Screen
+    , visibility : Visibility
+    , keyboard : Keyboard
+    , textures : TextureManager
+    , entities : List Entity
+    , player : Character
     , others : Dict String ( Character, Vec2 )
     , chunks : Dict ( Int, Int ) (Maybe Chunk)
     , messages : List ( Int, Message )
     , chatInput : Maybe String
     , messageI : Int
     , showPlayerList : Bool
-    , lastUpdate : ( Time.Posix, Character )
+    , lastUpdate : ( Int, Character )
     , fps : List Int
     , showMinimap : Bool
     }
 
 
 type GameMsg
-    = PlaygroundMsg Playground.Msg
+    = KeyChanged Bool String
+    | Tick Time.Posix
+    | GotViewport Browser.Dom.Viewport
+    | Resized Screen
+    | VisibilityChanged Browser.Events.Visibility
+    | GotTexture (Result ( String, Texture.Error ) ( String, Texture ))
     | KeyDown String
     | ChatInput String
     | ToggleMinimap

@@ -14,6 +14,7 @@ module UI.Button exposing
 import FontAwesome.Icon exposing (Icon)
 import Html exposing (..)
 import Html.Attributes as Attributes exposing (href, target)
+import Html.Events exposing (onClick)
 import UI exposing (..)
 import UI.Icon as Icon
 
@@ -98,7 +99,7 @@ btn kind { action, icon, text, attrs } =
         ( element, attributes ) =
             case action of
                 Enabled msg ->
-                    ( button, [ onClickStop msg ] )
+                    ( button, [ onClick msg ] )
 
                 Link url target_ ->
                     ( a

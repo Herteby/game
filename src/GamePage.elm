@@ -3,7 +3,7 @@ module GamePage exposing (..)
 import Account exposing (Account)
 import AltMath.Vector2 as Vec2 exposing (Vec2)
 import Browser.Dom
-import Browser.Events
+import Browser.Events exposing (Visibility(..))
 import Character exposing (Character, Direction(..), Speed(..))
 import Chunk exposing (Chunk)
 import Dict exposing (Dict)
@@ -17,100 +17,160 @@ import Html.Lazy exposing (..)
 import Json.Decode as Decode
 import Lamdera
 import Minimap
-import Playground exposing (Computer, Game, Shape)
-import Playground.Advanced as Playground
+import Playground exposing (Computer, Keyboard, Screen, Shape)
+import Playground.Internal exposing (TextureManager)
+import Set exposing (Set)
 import Task
 import Terrain
 import Time
 import Types exposing (..)
 import UI exposing (..)
 import UI.Icon as Icon
+import WebGL
+import WebGL.Shape2d
+import WebGL.Texture as Texture exposing (Texture)
 import World
 
 
-class =
-    namespace "GamePage"
+init : Account -> Dict String Character -> Time.Posix -> ( GameModel, Cmd GameMsg )
+init account others posix =
+    ( { time = { now = Time.posixToMillis posix, delta = 0 }
+      , screen = toScreen 600 600
+      , visibility = Visible
+      , keyboard = emptyKeyboard
+      , textures = { done = Dict.empty, loading = Set.empty }
+      , entities = []
+      , player = account.character
+      , others = Dict.map (\_ c -> ( c, c.coords )) others
+      , chunks = Dict.empty
+      , messages = []
+      , chatInput = Nothing
+      , messageI = 0
+      , showPlayerList = False
+      , lastUpdate = ( 0, account.character )
+      , fps = []
+      , showMinimap = False
+      }
+    , Task.perform GotViewport Browser.Dom.getViewport
+    )
 
 
-init : Account -> Dict String Character -> ( Game Memory, Cmd GameMsg )
-init account others =
-    game.init
-        |> Tuple.mapBoth
-            (Playground.edit
-                (\_ _ ->
-                    { player = account.character
-                    , others = Dict.map (\_ c -> ( c, c.coords )) others
-                    , chunks = Dict.empty
-                    , messages = []
-                    , chatInput = Nothing
-                    , messageI = 0
-                    , showPlayerList = False
-                    , lastUpdate = ( Time.millisToPosix 0, account.character )
-                    , fps = []
-                    , showMinimap = False
-                    }
-                )
-            )
-            (Cmd.map PlaygroundMsg)
-
-
-subscriptions : Game Memory -> Sub GameMsg
+subscriptions : GameModel -> Sub GameMsg
 subscriptions model =
-    Sub.batch
-        [ Sub.map PlaygroundMsg Playground.subscriptions.all
-        , Browser.Events.onKeyDown (Decode.field "code" Decode.string |> Decode.map KeyDown)
-        ]
+    case model.visibility of
+        Hidden ->
+            Browser.Events.onVisibilityChange VisibilityChanged
 
-
-update : GameMsg -> Game Memory -> ( Game Memory, Cmd GameMsg )
-update msg model =
-    case msg of
-        PlaygroundMsg submsg ->
-            game.update submsg model
-                |> (\( newmodel, cmd ) ->
-                        let
-                            ( computer, newMemory ) =
-                                Playground.get newmodel
-
-                            ( cx, cy ) =
-                                newMemory.player.coords
-                                    |> (\{ x, y } ->
-                                            ( round <| x / (64 * 16) - 0.5, round <| y / (64 * 16) - 0.5 )
-                                       )
-
-                            ( lastUpdate, cmd_ ) =
-                                if newMemory.player /= Tuple.second newMemory.lastUpdate && (Playground.now computer.time > Time.posixToMillis (Tuple.first newMemory.lastUpdate) + 250) then
-                                    ( ( Time.millisToPosix <| Playground.now computer.time, newMemory.player )
-                                    , Lamdera.sendToBackend (UpdatePlayer newMemory.player)
-                                    )
+        Visible ->
+            Sub.batch
+                [ Browser.Events.onKeyDown (Decode.field "code" Decode.string |> Decode.map KeyDown)
+                , Browser.Events.onKeyUp (Decode.map (KeyChanged False) (Decode.field "code" Decode.string))
+                , Browser.Events.onKeyDown
+                    (Decode.field "repeat" Decode.bool
+                        |> Decode.andThen
+                            (\repeat ->
+                                if repeat then
+                                    Decode.fail ""
 
                                 else
-                                    ( newMemory.lastUpdate, Cmd.none )
+                                    Decode.field "code" Decode.string
+                                        |> Decode.map (KeyChanged True)
+                            )
+                    )
+                , Browser.Events.onAnimationFrame Tick
+                , Browser.Events.onVisibilityChange VisibilityChanged
+                , Browser.Events.onResize (\w h -> Resized <| toScreen (toFloat w) (toFloat h))
+                ]
 
-                            newNewModel =
-                                newmodel |> Playground.edit (\_ mem -> { mem | lastUpdate = lastUpdate })
-                        in
-                        ( newNewModel
-                        , Cmd.batch
-                            [ Cmd.map PlaygroundMsg cmd
-                            , cmd_
-                            ]
+
+update : GameMsg -> GameModel -> ( GameModel, Cmd GameMsg )
+update msg model =
+    case msg of
+        GotViewport { viewport } ->
+            ( { model | screen = toScreen viewport.width viewport.height }
+            , Cmd.none
+            )
+
+        Resized newScreen ->
+            ( { model | screen = newScreen }
+            , Cmd.none
+            )
+
+        KeyChanged isDown key ->
+            ( { model | keyboard = updateKeyboard isDown key model.keyboard }
+            , Cmd.none
+            )
+
+        VisibilityChanged vis ->
+            ( { model
+                | time = { now = model.time.now, delta = 0 }
+                , keyboard = emptyKeyboard
+              }
+            , Cmd.none
+            )
+
+        GotTexture r ->
+            ( { model
+                | textures = gotTextures r model.textures
+              }
+            , Cmd.none
+            )
+
+        Tick posix ->
+            let
+                now =
+                    Time.posixToMillis posix
+
+                delta =
+                    now - model.time.now
+
+                ( cx, cy ) =
+                    model.player.coords
+                        |> (\{ x, y } ->
+                                ( round <| x / (64 * 16) - 0.5, round <| y / (64 * 16) - 0.5 )
+                           )
+
+                ( lastUpdate, cmd_ ) =
+                    if model.player /= Tuple.second model.lastUpdate && (model.time.now > Tuple.first model.lastUpdate + 250) then
+                        ( ( model.time.now, model.player )
+                        , Lamdera.sendToBackend (UpdatePlayer model.player)
                         )
-                            |> checkChunk cx cy
-                            |> checkChunk (cx + 1) cy
-                            |> checkChunk cx (cy + 1)
-                            |> checkChunk (cx + 1) (cy + 1)
-                   )
+
+                    else
+                        ( model.lastUpdate, Cmd.none )
+
+                ( entities, missing ) =
+                    WebGL.Shape2d.toEntities model.textures.done model.screen (render model)
+
+                ( textures, cmd__ ) =
+                    requestTexture missing model.textures
+            in
+            ( { model
+                | time = { now = now, delta = delta }
+                , entities = entities
+                , lastUpdate = lastUpdate
+                , textures = textures
+                , player =
+                    if model.chatInput == Nothing then
+                        Character.update model model.player
+
+                    else
+                        model.player
+                , others = Dict.map (\_ ( c, coords ) -> ( c, Character.interpolate model.time c coords )) model.others
+                , fps = 1000 // model.time.delta :: model.fps |> List.take 60
+              }
+            , Cmd.batch [ cmd_, cmd__ ]
+            )
+                |> andThen (checkChunk cx cy)
+                |> andThen (checkChunk (cx + 1) cy)
+                |> andThen (checkChunk cx (cy + 1))
+                |> andThen (checkChunk (cx + 1) (cy + 1))
 
         KeyDown code ->
             if code == "Enter" then
-                let
-                    ( _, memory ) =
-                        Playground.get model
-                in
-                case memory.chatInput of
+                case model.chatInput of
                     Just message ->
-                        ( model |> Playground.edit (\_ mem -> { mem | chatInput = Nothing })
+                        ( { model | chatInput = Nothing }
                         , if message == "" then
                             Cmd.none
 
@@ -119,7 +179,7 @@ update msg model =
                         )
 
                     Nothing ->
-                        ( model |> Playground.edit (\_ mem -> { mem | chatInput = Just "" })
+                        ( { model | chatInput = Just "" }
                         , Browser.Dom.focus "chatInput" |> Task.attempt (always Noop2)
                         )
 
@@ -127,17 +187,16 @@ update msg model =
                 ( model, Cmd.none )
 
         ChatInput message ->
-            ( model |> Playground.edit (\_ mem -> { mem | chatInput = Just message }), Cmd.none )
+            ( { model | chatInput = Just message }, Cmd.none )
 
         ToggleMinimap ->
-            ( model |> Playground.edit (\_ mem -> { mem | showMinimap = not mem.showMinimap }), Cmd.none )
+            ( { model | showMinimap = not model.showMinimap }, Cmd.none )
 
         TogglePlayerList ->
-            ( model |> Playground.edit (\_ mem -> { mem | showPlayerList = not mem.showPlayerList }), Cmd.none )
+            ( { model | showPlayerList = not model.showPlayerList }, Cmd.none )
 
         RemoveMessage i ->
-            ( model
-                |> Playground.edit (\_ mem -> { mem | messages = List.filter (\( i_, m ) -> i_ /= i) mem.messages })
+            ( { model | messages = List.filter (\( i_, m ) -> i_ /= i) model.messages }
             , Cmd.none
             )
 
@@ -145,40 +204,49 @@ update msg model =
             ( model, Cmd.none )
 
 
-checkChunk x y ( model, cmd ) =
-    let
-        memory =
-            Playground.get model |> Tuple.second
-    in
-    if Dict.get ( x, y ) memory.chunks == Nothing then
-        ( model |> Playground.edit (\_ _ -> { memory | chunks = Dict.insert ( x, y ) Nothing memory.chunks })
-        , Cmd.batch [ cmd, Lamdera.sendToBackend (GetChunk x y) ]
+andThen : (model -> ( model, Cmd msg )) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+andThen fn ( model, cmd ) =
+    fn model |> Tuple.mapSecond (\cmd_ -> Cmd.batch [ cmd, cmd_ ])
+
+
+checkChunk x y model =
+    if Dict.get ( x, y ) model.chunks == Nothing then
+        ( { model | chunks = Dict.insert ( x, y ) Nothing model.chunks }
+        , Lamdera.sendToBackend (GetChunk x y)
         )
 
     else
-        ( model, cmd )
+        ( model, Cmd.none )
 
 
-view : Game Memory -> Html GameMsg
-view gamemodel =
-    let
-        ( computer, memory ) =
-            Playground.get gamemodel
-    in
+view : GameModel -> Html GameMsg
+view game =
     div []
-        [ game.view gamemodel
-        , lazy2 chat memory.messages memory.chatInput
-        , info memory
-        , namePlates memory.player memory.others
-        , if memory.showPlayerList then
-            playerList memory.others
+        [ WebGL.toHtmlWith webGLOption
+            [ Attributes.width (round game.screen.width)
+            , Attributes.height (round game.screen.height)
+            ]
+            game.entities
+        , lazy2 chat game.messages game.chatInput
+        , info game
+        , namePlates game.player game.others
+        , if game.showPlayerList then
+            playerList game.others
 
           else
             none
         ]
 
 
-info : Memory -> Html msg
+webGLOption : List WebGL.Option
+webGLOption =
+    [ WebGL.alpha True
+    , WebGL.depth 1
+    , WebGL.clearColor 1 1 1 1
+    ]
+
+
+info : GameModel -> Html msg
 info { fps, player } =
     div [ class "coords" ]
         [ div [] [ text <| "fps: " ++ (String.fromInt <| List.sum fps // List.length fps) ]
@@ -279,40 +347,11 @@ playerList players =
         ]
 
 
-game :
-    { init : ( Game Memory, Cmd Playground.Msg )
-    , view : Game Memory -> Html a
-    , update : Playground.Msg -> Game Memory -> ( Game Memory, Cmd Playground.Msg )
-    }
-game =
-    let
-        char =
-            { coords = { x = 0, y = 0 }
-            , direction = Down
-            , speed = Standing
-            , skin = 1
-            }
-    in
-    Playground.embed render
-        updateGame
-        { player = char
-        , others = Dict.empty
-        , chunks = Dict.empty
-        , messages = []
-        , chatInput = Nothing
-        , messageI = 0
-        , showPlayerList = False
-        , lastUpdate = ( Time.millisToPosix 0, char )
-        , fps = []
-        , showMinimap = False
-        }
-
-
-render : Computer -> Memory -> List Shape
-render computer { player, others, chunks, showMinimap } =
+render : GameModel -> List Shape
+render game =
     let
         terrain =
-            chunks
+            game.chunks
                 |> Dict.toList
                 |> List.sortBy (Tuple.first >> Tuple.second)
                 |> List.reverse
@@ -323,7 +362,7 @@ render computer { player, others, chunks, showMinimap } =
                                 { x = toFloat x, y = toFloat y }
 
                             diff =
-                                Vec2.sub chunkVec (Vec2.scale (1 / World.chunkSize / Terrain.tileSize) player.coords)
+                                Vec2.sub chunkVec (Vec2.scale (1 / World.chunkSize / Terrain.tileSize) game.player.coords)
                         in
                         Maybe.andThen
                             (\chunk_ ->
@@ -342,35 +381,133 @@ render computer { player, others, chunks, showMinimap } =
     in
     Playground.square Playground.black 2000
         :: [ terrain
-                ++ (((player |> (\c -> ( c, c.coords ))) :: Dict.values others)
+                ++ (((game.player |> (\c -> ( c, c.coords ))) :: Dict.values game.others)
                         |> List.sortBy (Tuple.second >> .y >> negate)
-                        |> List.map (\( c, coords ) -> Character.render computer.time c |> Playground.move coords.x coords.y)
+                        |> List.map (\( c, coords ) -> Character.render game.time c |> Playground.move coords.x coords.y)
                    )
                 |> Playground.group
-                |> (if computer.keyboard.space then
-                        Playground.move (negate player.coords.x) (negate player.coords.y)
+                |> (if game.keyboard.space then
+                        Playground.move (negate game.player.coords.x) (negate game.player.coords.y)
 
                     else
                         Playground.scale 2
-                            >> Playground.move (negate player.coords.x * 2) (negate player.coords.y * 2)
+                            >> Playground.move (negate game.player.coords.x * 2) (negate game.player.coords.y * 2)
                    )
-           , if showMinimap then
-                Minimap.render chunks |> Playground.fade 0.8
+           , if game.showMinimap then
+                Minimap.render game.chunks |> Playground.fade 0.8
 
              else
                 Playground.square Playground.black 0
            ]
 
 
-updateGame : Computer -> Memory -> Memory
-updateGame computer memory =
-    { memory
-        | player =
-            if memory.chatInput == Nothing then
-                Character.update computer memory.player
+toScreen : Float -> Float -> Screen
+toScreen width height =
+    { width = width
+    , height = height
+    , top = height / 2
+    , left = -width / 2
+    , right = width / 2
+    , bottom = -height / 2
+    }
+
+
+emptyKeyboard : Keyboard
+emptyKeyboard =
+    { up = False
+    , down = False
+    , left = False
+    , right = False
+    , space = False
+    , enter = False
+    , shift = False
+    , backspace = False
+    , keys = Set.empty
+    }
+
+
+updateKeyboard : Bool -> String -> Keyboard -> Keyboard
+updateKeyboard isDown key keyboard =
+    let
+        keys =
+            if isDown then
+                Set.insert key keyboard.keys
 
             else
-                memory.player
-        , others = Dict.map (\_ ( c, coords ) -> ( c, Character.interpolate computer.time c coords )) memory.others
-        , fps = 1000 // Playground.delta computer.time :: memory.fps |> List.take 60
+                Set.remove key keyboard.keys
+    in
+    case key of
+        "Space" ->
+            { keyboard | keys = keys, space = isDown }
+
+        "Enter" ->
+            { keyboard | keys = keys, enter = isDown }
+
+        "ShiftLeft" ->
+            { keyboard | keys = keys, shift = isDown }
+
+        "ShiftRight" ->
+            { keyboard | keys = keys, shift = isDown }
+
+        "Backspace" ->
+            { keyboard | keys = keys, backspace = isDown }
+
+        "ArrowUp" ->
+            { keyboard | keys = keys, up = isDown }
+
+        "ArrowDown" ->
+            { keyboard | keys = keys, down = isDown }
+
+        "ArrowLeft" ->
+            { keyboard | keys = keys, left = isDown }
+
+        "ArrowRight" ->
+            { keyboard | keys = keys, right = isDown }
+
+        _ ->
+            { keyboard | keys = keys }
+
+
+requestTexture : Set String -> TextureManager -> ( TextureManager, Cmd GameMsg )
+requestTexture missing textures =
+    missing
+        |> Set.foldl
+            (\url (( { done, loading }, acc2 ) as acc) ->
+                if Set.member url loading then
+                    acc
+
+                else
+                    ( { loading = Set.insert url loading, done = done }
+                    , (Texture.loadWith textureOption url
+                        |> Task.map (Tuple.pair url)
+                        |> Task.mapError (Tuple.pair url)
+                        |> Task.attempt GotTexture
+                      )
+                        :: acc2
+                    )
+            )
+            ( textures, [] )
+        |> Tuple.mapSecond Cmd.batch
+
+
+textureOption : Texture.Options
+textureOption =
+    { magnify = Texture.linear
+    , minify = Texture.linear
+    , horizontalWrap = Texture.clampToEdge
+    , verticalWrap = Texture.clampToEdge
+    , flipY = True
     }
+
+
+gotTextures : Result ( String, Texture.Error ) ( String, Texture ) -> TextureManager -> TextureManager
+gotTextures r ({ done, loading } as textures) =
+    case r of
+        Ok ( name, t ) ->
+            { done =
+                Dict.insert name t done
+            , loading = Set.remove name loading
+            }
+
+        Err ( name, err ) ->
+            textures

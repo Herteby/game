@@ -46,14 +46,14 @@ skinList =
     List.range 1 45
 
 
-update : Computer -> Character -> Character
+update : { a | keyboard : Keyboard, time : Time } -> Character -> Character
 update { keyboard, time } player =
     let
         dir =
             toXY keyboard
 
         d =
-            Playground.delta time |> toFloat |> clamp 0 60
+            time.delta |> toFloat |> clamp 0 60
 
         speed_ =
             if keyboard.shift then
@@ -108,7 +108,7 @@ interpolate time char coords =
                     1
 
             d =
-                Playground.delta time |> toFloat |> clamp 0 60
+                time.delta |> toFloat |> clamp 0 60
 
             dir =
                 Vec2.direction char.coords coords
@@ -137,7 +137,7 @@ render : Playground.Time -> Character -> Playground.Shape
 render time char =
     let
         mod =
-            Playground.now time |> modBy 500
+            time.now |> modBy 500
 
         row =
             case char.direction of

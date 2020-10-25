@@ -1,4 +1,4 @@
-module UI exposing (..)
+module UI exposing (attrIf, grid, highlight, interactive, linedGrid, namespace, none, px, pxInt, showMore, spacer, textSpan)
 
 import FontAwesome.Solid as Solid
 import Html exposing (..)
@@ -135,8 +135,3 @@ highlight attribute substring string =
 interactive : Attribute msg
 interactive =
     class "interactive"
-
-
-onClickStop : msg -> Attribute msg
-onClickStop msg =
-    stopPropagationOn "click" (Decode.succeed ( msg, True ))

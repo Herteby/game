@@ -13,10 +13,10 @@ import Html.Attributes exposing (..)
 import Lamdera
 import LoginPage
 import Maybe.Extra as Maybe
-import Playground.Advanced as Playground
 import Process
 import RegisterPage
 import Task
+import Time
 import Types exposing (..)
 import UI.Button as Button exposing (Action(..))
 
@@ -110,6 +110,10 @@ update msg model =
             RegisterPage.update submsg submodel
                 |> with RegisterMsg RegisterPage model
 
+        ( GotTime account others time, _ ) ->
+            GamePage.init account others time
+                |> with GameMsg GamePage model
+
         ( GameMsg submsg, GamePage submodel ) ->
             GamePage.update submsg submodel |> with GameMsg GamePage model
 
@@ -132,8 +136,7 @@ updateFromBackend : ToFrontend -> FrontendModel -> ( FrontendModel, Cmd Frontend
 updateFromBackend msg model =
     case ( msg, model.page ) of
         ( LoggedIn account others, _ ) ->
-            GamePage.init account others
-                |> with GameMsg GamePage model
+            ( model, Task.perform (GotTime account others) Time.now )
 
         ( WrongUsernameOrPassword, LoginPage loginModel ) ->
             ( { page = LoginPage { loginModel | failed = True } }, Cmd.none )
@@ -148,22 +151,18 @@ updateFromBackend msg model =
         ( UsernameAlreadyExists, RegisterPage registerModel ) ->
             ( { page = RegisterPage { registerModel | failed = True } }, Cmd.none )
 
-        ( UpdateOtherPlayer username character, GamePage game ) ->
+        ( UpdateOtherPlayer username character, GamePage memory ) ->
             ( { model
                 | page =
                     GamePage <|
-                        Playground.edit
-                            (\_ memory ->
-                                { memory
-                                    | others =
-                                        memory.others
-                                            |> Dict.update username
-                                                (\prev ->
-                                                    Just ( character, Maybe.unwrap character.coords (Tuple.first >> .coords) prev )
-                                                )
-                                }
-                            )
-                            game
+                        { memory
+                            | others =
+                                memory.others
+                                    |> Dict.update username
+                                        (\prev ->
+                                            Just ( character, Maybe.unwrap character.coords (Tuple.first >> .coords) prev )
+                                        )
+                        }
               }
             , Cmd.none
             )
@@ -171,54 +170,33 @@ updateFromBackend msg model =
         ( ChunkResponse x y chunk, GamePage game ) ->
             ( { model
                 | page =
-                    GamePage <|
-                        Playground.edit
-                            (\_ memory ->
-                                { memory | chunks = Dict.insert ( x, y ) (Just chunk) memory.chunks }
-                            )
-                            game
+                    GamePage { game | chunks = Dict.insert ( x, y ) (Just chunk) game.chunks }
               }
             , Cmd.none
             )
 
         ( GotMessage message, GamePage game ) ->
-            let
-                ( _, mem ) =
-                    Playground.get game
-            in
             ( { model
                 | page =
-                    GamePage <|
-                        Playground.edit
-                            (\_ memory ->
-                                { memory
-                                    | messages = ( memory.messageI, message ) :: memory.messages |> List.take 10
-                                    , messageI = memory.messageI + 1
-                                }
-                            )
-                            game
+                    GamePage
+                        { game
+                            | messages = ( game.messageI, message ) :: game.messages |> List.take 10
+                            , messageI = game.messageI + 1
+                        }
               }
-            , Process.sleep 30000 |> Task.perform (\_ -> GameMsg (RemoveMessage mem.messageI))
+            , Process.sleep 30000 |> Task.perform (\_ -> GameMsg (RemoveMessage game.messageI))
             )
 
         ( OtherLoggedIn username, GamePage game ) ->
-            let
-                ( _, mem ) =
-                    Playground.get game
-            in
             ( { model
                 | page =
-                    GamePage <|
-                        Playground.edit
-                            (\_ memory ->
-                                { memory
-                                    | messages = ( memory.messageI, SystemMessage (username ++ " logged in") ) :: memory.messages |> List.take 10
-                                    , messageI = memory.messageI + 1
-                                }
-                            )
-                            game
+                    GamePage
+                        { game
+                            | messages = ( game.messageI, SystemMessage (username ++ " logged in") ) :: game.messages |> List.take 10
+                            , messageI = game.messageI + 1
+                        }
               }
-            , Process.sleep 30000 |> Task.perform (\_ -> GameMsg (RemoveMessage mem.messageI))
+            , Process.sleep 30000 |> Task.perform (\_ -> GameMsg (RemoveMessage game.messageI))
             )
 
         _ ->

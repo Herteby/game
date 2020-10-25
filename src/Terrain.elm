@@ -2,7 +2,33 @@ module Terrain exposing (..)
 
 import Playground
 import Playground.Extra as Playground
-import Types exposing (..)
+import Random exposing (Seed)
+
+
+type alias Environment =
+    { height : Float
+    , temp : Float
+    , humidity : Float
+    , foliage : Float
+    , volcanism : Float
+    , seed : Seed
+    , x : Int
+    , y : Int
+    }
+
+
+type Terrain
+    = Water
+    | Beach
+    | Dirt
+    | DirtDark
+    | Grass
+    | GrassDark
+    | GrassDry
+    | Snow
+    | Volcanic
+    | Magma
+    | Pond
 
 
 tileSize =

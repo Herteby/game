@@ -1,6 +1,6 @@
 module Backend exposing (app)
 
-import Character
+import Character exposing (Character)
 import Dict
 import Env
 import Lamdera exposing (ClientId, SessionId)

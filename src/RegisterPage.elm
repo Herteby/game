@@ -2,15 +2,20 @@ module RegisterPage exposing (..)
 
 import Character
 import FontAwesome.Solid as Solid
-import Hash
+import Hash exposing (Hash)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Lamdera
 import Rumkin exposing (RumkinResult, Strength(..))
 import Types exposing (..)
-import UI exposing (attrIf, none)
+import UI exposing (..)
 import UI.Button as Button exposing (Action(..))
+
+
+class =
+    namespace
+        "RegisterPage"
 
 
 init : RegisterModel
@@ -25,6 +30,7 @@ init =
     }
 
 
+update : RegisterMsg -> RegisterModel -> ( RegisterModel, Cmd RegisterMsg )
 update msg model =
     case msg of
         InputUsername string ->
@@ -68,6 +74,7 @@ update msg model =
                     ( model, Cmd.none )
 
 
+view : RegisterModel -> Html RegisterMsg
 view model =
     if not model.characterPicker then
         let

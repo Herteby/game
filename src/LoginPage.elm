@@ -18,6 +18,7 @@ init =
     }
 
 
+update : LoginMsg -> LoginModel -> ( LoginModel, Cmd LoginMsg )
 update msg model =
     case msg of
         LoginUsername string ->
@@ -32,6 +33,7 @@ update msg model =
             )
 
 
+view : LoginModel -> Html LoginMsg
 view model =
     div [ class "loginPage" ]
         [ Html.form [ class "form", onSubmit Submit ]

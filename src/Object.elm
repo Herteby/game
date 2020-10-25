@@ -1,11 +1,66 @@
 module Object exposing (..)
 
-import Array exposing (Array)
 import Playground exposing (Shape)
 import Playground.Extra as Playground
 import Random exposing (Generator)
-import Terrain
-import Types exposing (..)
+import Terrain exposing (Environment, Terrain(..))
+
+
+type Object
+    = Tree TreeColor TreeVariant
+    | Conifer ConiferSnow ConiferVariant
+    | DeadTree DeadTreeVariant
+    | Shell Int
+    | Flower FlowerColor FlowerVariant
+
+
+type FlowerColor
+    = FlowerRed
+    | FlowerYellow
+    | FlowerBlue
+    | FlowerPurple
+    | FlowerPink
+
+
+type FlowerVariant
+    = F1
+    | F2
+    | F3
+    | F4
+
+
+type TreeVariant
+    = T1
+    | T2
+    | T3
+    | T4
+
+
+type TreeColor
+    = Green
+    | Yellow
+    | Orange
+
+
+type ConiferVariant
+    = C1
+    | C2
+    | C3
+    | C4
+    | C5
+
+
+type DeadTreeVariant
+    = D1
+    | D2
+    | D3
+    | D4
+    | D5
+
+
+type ConiferSnow
+    = NoSnow
+    | WithSnow
 
 
 generator : Terrain -> Environment -> Generator (Maybe Object)

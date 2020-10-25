@@ -1,7 +1,10 @@
-module Hash exposing (fromString)
+module Hash exposing (Hash, fromString)
 
 import Sha256
-import Types exposing (Hash(..))
+
+
+type Hash
+    = Hash String
 
 
 fromString : String -> Hash

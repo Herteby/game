@@ -1,16 +1,13 @@
 module Types exposing (..)
 
+import Account exposing (Account)
 import AltMath.Vector2 exposing (Vec2)
+import Character exposing (Character)
+import Chunk exposing (Chunk)
 import Dict exposing (Dict)
-import Lamdera exposing (ClientId)
-import Matrix exposing (Matrix)
+import Hash exposing (Hash)
 import Playground exposing (Game)
-import Random exposing (Seed)
 import Time
-
-
-type Hash
-    = Hash String
 
 
 type alias FrontendModel =
@@ -25,76 +22,18 @@ type Page
     | GamePage (Game Memory)
 
 
-type alias Memory =
-    { player : Character
-    , others : Dict String ( Character, Vec2 )
-    , chunks : Dict ( Int, Int ) (Request Chunk)
-    , messages : List ( Int, Message )
-    , chatInput : Maybe String
-    , messageI : Int
-    , showPlayerList : Bool
-    , lastUpdate : ( Time.Posix, Character )
-    , fps : List Int
-    , showMinimap : Bool
-    }
-
-
-type alias Character =
-    { coords : Vec2
-    , direction : Direction
-    , speed : Speed
-    , skin : Int
-    }
-
-
-type Direction
-    = Up
-    | Down
-    | Left
-    | Right
-
-
-type Speed
-    = Standing
-    | Walking
-    | Sprinting
-
-
-type Message
-    = SystemMessage String
-    | UserMessage { username : String, skin : Int, message : String }
-
-
-type Request a
-    = Pending
-    | Received a
-
-
 type alias BackendModel =
     { accounts : List Account
     , chunks : Dict ( Int, Int ) Chunk
     }
 
 
-type alias Account =
-    { username : String
-    , passwordHash : Hash
-    , character : Character
-    , loggedIn : Maybe ClientId
-    }
-
-
 type FrontendMsg
     = LoginMsg LoginMsg
     | RegisterMsg RegisterMsg
-    | GameMsg Playground.Msg
+    | GameMsg GameMsg
     | GotoLogin
     | GotoRegister
-    | KeyDown String
-    | ChatInput String
-    | ToggleMinimap
-    | TogglePlayerList
-    | RemoveMessage Int
     | Noop
 
 
@@ -122,6 +61,48 @@ type ToFrontend
     | ChunkResponse Int Int Chunk
 
 
+type alias Memory =
+    { player : Character
+    , others : Dict String ( Character, Vec2 )
+    , chunks : Dict ( Int, Int ) (Maybe Chunk)
+    , messages : List ( Int, Message )
+    , chatInput : Maybe String
+    , messageI : Int
+    , showPlayerList : Bool
+    , lastUpdate : ( Time.Posix, Character )
+    , fps : List Int
+    , showMinimap : Bool
+    }
+
+
+type GameMsg
+    = PlaygroundMsg Playground.Msg
+    | KeyDown String
+    | ChatInput String
+    | ToggleMinimap
+    | TogglePlayerList
+    | RemoveMessage Int
+    | Noop2
+
+
+type Message
+    = SystemMessage String
+    | UserMessage { username : String, skin : Int, message : String }
+
+
+type alias LoginModel =
+    { username : String
+    , password : String
+    , failed : Bool
+    }
+
+
+type LoginMsg
+    = LoginUsername String
+    | LoginPassword String
+    | Submit
+
+
 type alias RegisterModel =
     { username : String
     , password : String
@@ -141,107 +122,3 @@ type RegisterMsg
     | Next
     | SelectedCharacter Int
     | Register
-
-
-type alias LoginModel =
-    { username : String
-    , password : String
-    , failed : Bool
-    }
-
-
-type LoginMsg
-    = LoginUsername String
-    | LoginPassword String
-    | Submit
-
-
-type alias Chunk =
-    { textures : List ( Terrain, String )
-    , terrain : Matrix Terrain
-    , objects : List (List (Maybe Object))
-    , minimap : String
-    }
-
-
-type Terrain
-    = Water
-    | Beach
-    | Dirt
-    | DirtDark
-    | Grass
-    | GrassDark
-    | GrassDry
-    | Snow
-    | Volcanic
-    | Magma
-    | Pond
-
-
-type alias Environment =
-    { height : Float
-    , temp : Float
-    , humidity : Float
-    , foliage : Float
-    , volcanism : Float
-    , seed : Seed
-    , x : Int
-    , y : Int
-    }
-
-
-type Object
-    = Tree TreeColor TreeVariant
-    | Conifer ConiferSnow ConiferVariant
-    | DeadTree DeadTreeVariant
-    | Shell Int
-    | Flower FlowerColor FlowerVariant
-
-
-type FlowerColor
-    = FlowerRed
-    | FlowerYellow
-    | FlowerBlue
-    | FlowerPurple
-    | FlowerPink
-
-
-type FlowerVariant
-    = F1
-    | F2
-    | F3
-    | F4
-
-
-type TreeVariant
-    = T1
-    | T2
-    | T3
-    | T4
-
-
-type TreeColor
-    = Green
-    | Yellow
-    | Orange
-
-
-type ConiferVariant
-    = C1
-    | C2
-    | C3
-    | C4
-    | C5
-
-
-type DeadTreeVariant
-    = D1
-    | D2
-    | D3
-    | D4
-    | D5
-
-
-type ConiferSnow
-    = NoSnow
-    | WithSnow

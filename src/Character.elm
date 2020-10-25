@@ -4,7 +4,27 @@ import AltMath.Vector2 as Vec2 exposing (Vec2)
 import Playground exposing (Computer, Keyboard, Time)
 import Playground.Extra as Playground
 import Set
-import Types exposing (..)
+
+
+type alias Character =
+    { coords : Vec2
+    , direction : Direction
+    , speed : Speed
+    , skin : Int
+    }
+
+
+type Direction
+    = Up
+    | Down
+    | Left
+    | Right
+
+
+type Speed
+    = Standing
+    | Walking
+    | Sprinting
 
 
 create : Int -> Maybe Character
@@ -26,55 +46,51 @@ skinList =
     List.range 1 45
 
 
-update : Computer -> Memory -> Character
-update { keyboard, time } { player, chatInput } =
-    if chatInput /= Nothing then
-        player
+update : Computer -> Character -> Character
+update { keyboard, time } player =
+    let
+        dir =
+            toXY keyboard
 
-    else
-        let
-            dir =
-                toXY keyboard
+        d =
+            Playground.delta time |> toFloat |> clamp 0 60
 
-            d =
-                Playground.delta time |> toFloat |> clamp 0 60
+        speed_ =
+            if keyboard.shift then
+                speed * 3
 
-            speed_ =
-                if keyboard.shift then
-                    speed * 3
+            else
+                speed
+    in
+    { player
+        | coords =
+            Vec2.scale (speed_ * d) dir
+                |> Vec2.add player.coords
+        , direction =
+            if dir.y > 0 then
+                Up
 
-                else
-                    speed
-        in
-        { player
-            | coords =
-                Vec2.scale (speed_ * d) dir
-                    |> Vec2.add player.coords
-            , direction =
-                if dir.y > 0 then
-                    Up
+            else if dir.y < 0 then
+                Down
 
-                else if dir.y < 0 then
-                    Down
+            else if dir.x < 0 then
+                Left
 
-                else if dir.x < 0 then
-                    Left
+            else if dir.x > 0 then
+                Right
 
-                else if dir.x > 0 then
-                    Right
+            else
+                player.direction
+        , speed =
+            if toXY keyboard == { x = 0, y = 0 } then
+                Standing
 
-                else
-                    player.direction
-            , speed =
-                if toXY keyboard == { x = 0, y = 0 } then
-                    Standing
+            else if keyboard.shift then
+                Sprinting
 
-                else if keyboard.shift then
-                    Sprinting
-
-                else
-                    Walking
-        }
+            else
+                Walking
+    }
 
 
 interpolate : Time -> Character -> Vec2 -> Vec2

@@ -1,16 +1,16 @@
 module World exposing (..)
 
+import Chunk exposing (Chunk)
 import Image
 import List.Extra as List
 import Matrix exposing (Matrix)
 import Maybe.Extra as Maybe
 import Minimap
-import Object
+import Object exposing (Object)
 import Playground
 import Random exposing (Seed)
 import Simplex exposing (PermutationTable)
 import Terrain exposing (..)
-import Types exposing (..)
 
 
 chunkSize =

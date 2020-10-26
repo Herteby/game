@@ -5,7 +5,7 @@ import AltMath.Vector2 as Vec2 exposing (Vec2)
 import Browser.Dom
 import Browser.Events exposing (Visibility(..))
 import Character exposing (Character, Direction(..), Speed(..))
-import Chunk exposing (Chunk)
+import Chunk exposing (Chunk, Request(..))
 import Dict exposing (Dict)
 import FontAwesome.Icon exposing (Icon)
 import FontAwesome.Solid as Solid
@@ -143,10 +143,9 @@ update msg model =
                     now - model.time.now
 
                 ( cx, cy ) =
-                    model.player.coords
-                        |> (\{ x, y } ->
-                                ( round <| x / (64 * 16) - 0.5, round <| y / (64 * 16) - 0.5 )
-                           )
+                    ( round <| model.player.coords.x / (64 * 16) - 0.5
+                    , round <| model.player.coords.y / (64 * 16) - 0.5
+                    )
 
                 ( lastUpdate, cmd_ ) =
                     if model.player /= Tuple.second model.lastUpdate && (model.time.now > Tuple.first model.lastUpdate + 250) then
@@ -209,7 +208,7 @@ andThen fn ( model, cmd ) =
 
 checkChunk x y model =
     if Dict.get ( x, y ) model.chunks == Nothing then
-        ( { model | chunks = Dict.insert ( x, y ) Nothing model.chunks }
+        ( { model | chunks = Dict.insert ( x, y ) Pending model.chunks }
         , Lamdera.sendToBackend (GetChunk x y)
         )
 
@@ -362,8 +361,11 @@ render game =
                             diff =
                                 Vec2.sub chunkVec (Vec2.scale (1 / World.chunkSize / Terrain.tileSize) game.player.coords)
                         in
-                        Maybe.andThen
-                            (\chunk_ ->
+                        case chunk of
+                            Pending ->
+                                Nothing
+
+                            Done chunk_ ->
                                 if abs diff.x < 1 && abs diff.y < 1 then
                                     World.render chunk_
                                         |> Playground.move
@@ -373,30 +375,27 @@ render game =
 
                                 else
                                     Nothing
-                            )
-                            chunk
                     )
     in
-    Playground.square Playground.black 2000
-        :: [ terrain
-                ++ (((game.player |> (\c -> ( c, c.coords ))) :: Dict.values game.others)
-                        |> List.sortBy (Tuple.second >> .y >> negate)
-                        |> List.map (\( c, coords ) -> Character.render game.time c |> Playground.move coords.x coords.y)
-                   )
-                |> Playground.group
-                |> (if List.member Key.Spacebar game.keyboard then
-                        Playground.move (negate game.player.coords.x) (negate game.player.coords.y)
+    [ terrain
+        ++ (((game.player |> (\c -> ( c, c.coords ))) :: Dict.values game.others)
+                |> List.sortBy (Tuple.second >> .y >> negate)
+                |> List.map (\( c, coords ) -> Character.render game.time c |> Playground.move coords.x coords.y)
+           )
+        |> Playground.group
+        |> (if List.member Key.Spacebar game.keyboard then
+                Playground.move (negate game.player.coords.x) (negate game.player.coords.y)
 
-                    else
-                        Playground.scale 2
-                            >> Playground.move (negate game.player.coords.x * 2) (negate game.player.coords.y * 2)
-                   )
-           , if game.showMinimap then
-                Minimap.render game.chunks |> Playground.fade 0.8
+            else
+                Playground.scale 2
+                    >> Playground.move (negate game.player.coords.x * 2) (negate game.player.coords.y * 2)
+           )
+    , if game.showMinimap then
+        Minimap.render game.chunks |> Playground.fade 0.8
 
-             else
-                Playground.square Playground.black 0
-           ]
+      else
+        Playground.square Playground.black 0
+    ]
 
 
 toScreen : Float -> Float -> Screen

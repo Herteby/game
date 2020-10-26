@@ -5,7 +5,7 @@ import AltMath.Vector2 exposing (Vec2)
 import Browser.Dom
 import Browser.Events exposing (Visibility)
 import Character exposing (Character)
-import Chunk exposing (Chunk)
+import Chunk exposing (Chunk, Request)
 import Dict exposing (Dict)
 import Hash exposing (Hash)
 import Keyboard.Key exposing (Key)
@@ -77,7 +77,7 @@ type alias GameModel =
     , entities : List Entity
     , player : Character
     , others : Dict String ( Character, Vec2 )
-    , chunks : Dict ( Int, Int ) (Maybe Chunk)
+    , chunks : Dict ( Int, Int ) (Request Chunk)
     , messages : List ( Int, Message )
     , chatInput : Maybe String
     , messageI : Int

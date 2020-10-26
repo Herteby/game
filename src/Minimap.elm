@@ -1,6 +1,6 @@
 module Minimap exposing (..)
 
-import Chunk exposing (Chunk)
+import Chunk exposing (Chunk, Request(..))
 import Dict exposing (Dict)
 import Image
 import Matrix exposing (Matrix)
@@ -8,20 +8,22 @@ import Playground
 import Terrain exposing (Terrain(..))
 
 
-render : Dict ( Int, Int ) (Maybe Chunk) -> Playground.Shape
+render : Dict ( Int, Int ) (Request Chunk) -> Playground.Shape
 render chunks =
     chunks
         |> Dict.toList
         |> List.filterMap
             (\( ( x, y ), chunk ) ->
-                Maybe.map
-                    (\chunk_ ->
+                case chunk of
+                    Pending ->
+                        Nothing
+
+                    Done chunk_ ->
                         Playground.image 64 64 chunk_.minimap
                             |> Playground.move
                                 (toFloat x * 64)
                                 (toFloat y * 64)
-                    )
-                    chunk
+                            |> Just
             )
         |> Playground.group
 

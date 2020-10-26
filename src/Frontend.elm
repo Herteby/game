@@ -2,6 +2,7 @@ module Frontend exposing (app, init)
 
 import AltMath.Vector2 exposing (Vec2)
 import Character
+import Chunk exposing (Request(..))
 import Dict exposing (Dict)
 import Env
 import FontAwesome.Solid as Solid
@@ -170,7 +171,7 @@ updateFromBackend msg model =
         ( ChunkResponse x y chunk, GamePage game ) ->
             ( { model
                 | page =
-                    GamePage { game | chunks = Dict.insert ( x, y ) (Just chunk) game.chunks }
+                    GamePage { game | chunks = Dict.insert ( x, y ) (Done chunk) game.chunks }
               }
             , Cmd.none
             )

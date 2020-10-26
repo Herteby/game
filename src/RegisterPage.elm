@@ -13,11 +13,6 @@ import UI exposing (..)
 import UI.Button as Button exposing (Action(..))
 
 
-class =
-    namespace
-        "RegisterPage"
-
-
 init : RegisterModel
 init =
     { username = ""

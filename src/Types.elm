@@ -85,6 +85,8 @@ type alias GameModel =
     , lastUpdate : ( Int, Character )
     , fps : List Int
     , showMinimap : Bool
+    , starting : Bool
+    , initialLoad : Maybe Int
     }
 
 

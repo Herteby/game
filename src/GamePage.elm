@@ -17,6 +17,7 @@ import Html.Lazy exposing (..)
 import Json.Decode as Decode
 import Keyboard.Key as Key
 import Lamdera
+import Maybe.Extra as Maybe
 import Minimap
 import Playground exposing (Computer, Keyboard, Screen, Shape)
 import Playground.Internal exposing (TextureManager)
@@ -51,6 +52,8 @@ init account others posix =
       , lastUpdate = ( 0, account.character )
       , fps = []
       , showMinimap = False
+      , starting = True
+      , initialLoad = Nothing
       }
     , Task.perform GotViewport Browser.Dom.getViewport
     )
@@ -182,6 +185,7 @@ update msg model =
                 |> andThen (checkChunk (cx + 1) cy)
                 |> andThen (checkChunk cx (cy + 1))
                 |> andThen (checkChunk (cx + 1) (cy + 1))
+                |> andThen setInitialLoad
 
         ChatInput message ->
             ( { model | chatInput = Just message }, Cmd.none )
@@ -216,23 +220,58 @@ checkChunk x y model =
         ( model, Cmd.none )
 
 
-view : GameModel -> Html GameMsg
-view game =
-    div []
-        [ WebGL.toHtmlWith webGLOption
-            [ Attributes.width (round game.screen.width)
-            , Attributes.height (round game.screen.height)
-            ]
-            game.entities
-        , lazy2 chat game.messages game.chatInput
-        , info game
-        , namePlates game.player game.others
-        , if game.showPlayerList then
-            playerList game.others
+setInitialLoad model =
+    ( if model.starting then
+        { model
+            | initialLoad = Just (calculateRemaining model)
+            , starting = calculateRemaining model > 0
+        }
 
-          else
-            none
-        ]
+      else
+        model
+    , Cmd.none
+    )
+
+
+calculateRemaining : GameModel -> Int
+calculateRemaining model =
+    Set.size model.textures.loading
+        + (model.chunks
+            |> Dict.values
+            |> List.filter ((==) Pending)
+            |> List.length
+          )
+
+
+view : GameModel -> Html GameMsg
+view model =
+    if model.starting then
+        let
+            remaining =
+                calculateRemaining model
+        in
+        Maybe.unwrap none
+            (\initialLoad ->
+                loadingBar initialLoad (initialLoad - remaining)
+            )
+            model.initialLoad
+
+    else
+        div []
+            [ WebGL.toHtmlWith webGLOption
+                [ Attributes.width (round model.screen.width)
+                , Attributes.height (round model.screen.height)
+                ]
+                model.entities
+            , lazy2 chat model.messages model.chatInput
+            , info model
+            , namePlates model.player model.others
+            , if model.showPlayerList then
+                playerList model.others
+
+              else
+                none
+            ]
 
 
 webGLOption : List WebGL.Option
@@ -341,6 +380,18 @@ playerList players =
                         )
                 )
             ]
+        ]
+
+
+loadingBar : Int -> Int -> Html msg
+loadingBar toLoad progress =
+    let
+        percent =
+            String.fromInt (progress * 100 // toLoad) ++ "%"
+    in
+    div [ class "loading" ]
+        [ div [ class "bar", style "width" percent ] []
+        , textSpan (String.fromInt progress ++ " / " ++ String.fromInt toLoad)
         ]
 
 

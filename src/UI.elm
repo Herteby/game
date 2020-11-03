@@ -1,11 +1,12 @@
-module UI exposing (attrIf, grid, highlight, interactive, linedGrid, namespace, none, px, pxInt, showMore, spacer, textSpan)
+module UI exposing (attrIf, grid, highlight, interactive, linedGrid, modal, namespace, none, px, pxInt, showMore, spacer, textSpan)
 
 import FontAwesome.Solid as Solid
 import Html exposing (..)
 import Html.Attributes as Attributes exposing (..)
-import Html.Events exposing (stopPropagationOn)
+import Html.Events exposing (onClick, stopPropagationOn)
 import Json.Decode as Decode
 import List.Extra as List
+import Maybe.Extra as Maybe
 import Regex
 import UI.Icon as Icon
 
@@ -130,6 +131,15 @@ highlight attribute substring string =
             Regex.split regex string |> List.map text
     in
     span [] (List.interweave rest matches)
+
+
+modal : Maybe msg -> List (Html msg) -> Html msg
+modal close content =
+    div [ class "overlay" ]
+        [ div [ class "modalCloser", Maybe.unwrap (classList []) onClick close ] []
+        , div [ class "modal" ]
+            content
+        ]
 
 
 interactive : Attribute msg

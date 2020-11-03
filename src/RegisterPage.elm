@@ -76,80 +76,80 @@ view model =
             stats =
                 Rumkin.getStats model.password
         in
-        Html.form [ class "form", onSubmit Next ]
-            [ label []
-                [ text "Username"
-                , input [ class "input", onInput InputUsername, value model.username ] []
-                ]
-            , if model.failed then
-                text "Username already taken"
-
-              else
-                text ""
-            , label []
-                [ text "Password"
-                , input
-                    [ class "input"
-                    , onInput InputPassword
-                    , value model.password
-                    , type_ "password"
+        modal Nothing
+            [ Html.form [ class "form", onSubmit Next ]
+                [ label []
+                    [ text "Username"
+                    , input [ class "input", onInput InputUsername, value model.username ] []
                     ]
-                    []
-                , if model.password == "" then
-                    none
+                , if model.failed then
+                    text "Username already taken"
 
                   else
-                    viewStrength stats
-                ]
-            , label []
-                [ text "Repeat password"
-                , input
-                    [ class "input"
-                    , onInput InputPassword2
-                    , onBlur Blurred
-                    , value model.password2
-                    , type_ "password"
+                    text ""
+                , label []
+                    [ text "Password"
+                    , input
+                        [ class "input"
+                        , onInput InputPassword
+                        , value model.password
+                        , type_ "password"
+                        ]
+                        []
+                    , if model.password == "" then
+                        none
+
+                      else
+                        viewStrength stats
                     ]
-                    []
+                , label []
+                    [ text "Repeat password"
+                    , input
+                        [ class "input"
+                        , onInput InputPassword2
+                        , onBlur Blurred
+                        , value model.password2
+                        , type_ "password"
+                        ]
+                        []
+                    ]
+                , if model.blurred && model.password2 /= model.password then
+                    text "The passwords don't match"
+
+                  else
+                    text ""
+                , Button.primary
+                    { action =
+                        if model.password /= model.password2 || stats.strength == VeryWeak then
+                            Disabled
+
+                        else
+                            Enabled Next
+                    , text = "Next"
+                    , icon = Just Solid.check
+                    , attrs = []
+                    }
                 ]
-            , if model.blurred && model.password2 /= model.password then
-                text "The passwords don't match"
-
-              else
-                text ""
-            , Button.primary
-                { action =
-                    if model.password /= model.password2 || stats.strength == VeryWeak then
-                        Disabled
-
-                    else
-                        Enabled Next
-                , text = "Next"
-                , icon = Just Solid.check
-                , attrs = []
-                }
             ]
 
     else
-        div [ class "main" ]
-            [ div [ class "form" ]
-                [ characterPicker model.character
-                , div
-                    [ style "display" "flex"
-                    , style "justify-content" "center"
-                    ]
-                    [ Button.primary
-                        { action =
-                            if model.character == Nothing then
-                                Disabled
+        modal Nothing
+            [ characterPicker model.character
+            , div
+                [ style "display" "flex"
+                , style "justify-content" "center"
+                ]
+                [ Button.primary
+                    { action =
+                        if model.character == Nothing then
+                            Disabled
 
-                            else
-                                Enabled Register
-                        , text = "Enter world"
-                        , icon = Just Solid.signInAlt
-                        , attrs = []
-                        }
-                    ]
+                        else
+                            Enabled Register
+                    , text = "Enter world"
+                    , icon = Just Solid.signInAlt
+                    , attrs = []
+                    }
                 ]
             ]
 

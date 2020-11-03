@@ -19,6 +19,7 @@ import RegisterPage
 import Task
 import Time
 import Types exposing (..)
+import UI exposing (..)
 import UI.Button as Button exposing (Action(..))
 
 
@@ -206,7 +207,7 @@ updateFromBackend msg model =
 
 view : FrontendModel -> Html FrontendMsg
 view model =
-    div [ class "main" ]
+    main_ []
         [ case model.page of
             LoginPage loginmodel ->
                 LoginPage.view loginmodel |> Html.map LoginMsg
@@ -224,19 +225,17 @@ view model =
 
 startView : Html FrontendMsg
 startView =
-    div [ class "startPage" ]
-        [ div [ class "form" ]
-            [ Button.primary
-                { action = Enabled GotoLogin
-                , text = "Log in"
-                , icon = Just Solid.signInAlt
-                , attrs = []
-                }
-            , Button.primary
-                { action = Enabled GotoRegister
-                , text = "Register"
-                , icon = Just Solid.userPlus
-                , attrs = []
-                }
-            ]
+    modal Nothing
+        [ Button.primary
+            { action = Enabled GotoLogin
+            , text = "Log in"
+            , icon = Just Solid.signInAlt
+            , attrs = []
+            }
+        , Button.primary
+            { action = Enabled GotoRegister
+            , text = "Register"
+            , icon = Just Solid.userPlus
+            , attrs = []
+            }
         ]

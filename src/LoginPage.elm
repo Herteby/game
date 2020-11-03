@@ -7,6 +7,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Lamdera
 import Types exposing (..)
+import UI exposing (modal)
 import UI.Button as Button exposing (Action(..))
 
 
@@ -35,7 +36,7 @@ update msg model =
 
 view : LoginModel -> Html LoginMsg
 view model =
-    div [ class "loginPage" ]
+    modal Nothing
         [ Html.form [ class "form", onSubmit Submit ]
             [ label []
                 [ text "Username"

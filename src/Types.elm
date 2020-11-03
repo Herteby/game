@@ -11,6 +11,7 @@ import Hash exposing (Hash)
 import Keyboard.Key exposing (Key)
 import Playground exposing (Keyboard, Screen, Time)
 import Playground.Internal exposing (TextureManager)
+import Set exposing (Set)
 import Time
 import WebGL exposing (Entity)
 import WebGL.Texture as Texture exposing (Texture)
@@ -74,6 +75,7 @@ type alias GameModel =
     , visibility : Visibility
     , keyboard : List Key
     , textures : TextureManager
+    , totalToLoad : Set String
     , entities : List Entity
     , player : Character
     , others : Dict String ( Character, Vec2 )
@@ -86,7 +88,6 @@ type alias GameModel =
     , fps : List Int
     , showMinimap : Bool
     , starting : Bool
-    , initialLoad : Maybe Int
     }
 
 

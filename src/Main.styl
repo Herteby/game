@@ -23,6 +23,12 @@ body > div:last-child
   left unset !important
   bottom unset !important
   
+main
+  column(0px)
+  align-items center
+  justify-content center
+  flex-grow 1
+  
 .input
   rounded()
   border none
@@ -30,21 +36,8 @@ body > div:last-child
   padding 0 10px
   font-size 16px
 
-.main 
-  column(0px)
-  align-items center
-  justify-content center
-  flex-grow 1
-
-.startPage 
-  column(10px)
-
 .form 
   column(15px)
-  background rgba(0,0,0,0.7)
-  rounded()
-  padding 20px
-  margin auto
   label 
     display flex
     flex-direction column
@@ -146,23 +139,6 @@ body > div:last-child
   top 10px
   left 10px
   text-shadow 1px 1px #000
-  
-.overlay
-  position absolute
-  top 0
-  bottom 0
-  left 0
-  right 0
-  display flex
-  justify-content center
-  align-items center
-  
-.modal
-  background rgba(0,0,0,0.5)
-  rounded()
-  padding 10px
-  .header
-    font-size 20px
 
 .namePlates
   pointer-events none

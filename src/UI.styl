@@ -29,3 +29,29 @@
     
   .interactive
     interactive()
+    
+  .overlay
+    position fixed
+    top 0
+    bottom 0
+    left 0
+    right 0
+    display flex
+    justify-content center
+    align-items center
+  
+  .modal
+    column(10px)
+    background rgba(0,0,0,0.7)
+    rounded()
+    padding 10px
+    z-index 1
+    .header
+      font-size 20px
+  
+  .modalCloser
+    position absolute
+    top 0
+    bottom 0
+    left 0
+    right 0

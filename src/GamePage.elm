@@ -41,6 +41,7 @@ init account others posix =
       , visibility = Visible
       , keyboard = []
       , textures = { done = Dict.empty, loading = Set.empty }
+      , totalToLoad = Set.empty
       , entities = []
       , player = account.character
       , others = Dict.map (\_ c -> ( c, c.coords )) others
@@ -53,7 +54,6 @@ init account others posix =
       , fps = []
       , showMinimap = False
       , starting = True
-      , initialLoad = Nothing
       }
     , Task.perform GotViewport Browser.Dom.getViewport
     )
@@ -185,7 +185,7 @@ update msg model =
                 |> andThen (checkChunk (cx + 1) cy)
                 |> andThen (checkChunk cx (cy + 1))
                 |> andThen (checkChunk (cx + 1) (cy + 1))
-                |> andThen setInitialLoad
+                |> andThen setTotalToLoad
 
         ChatInput message ->
             ( { model | chatInput = Just message }, Cmd.none )
@@ -220,10 +220,10 @@ checkChunk x y model =
         ( model, Cmd.none )
 
 
-setInitialLoad model =
+setTotalToLoad model =
     ( if model.starting then
         { model
-            | initialLoad = Just (calculateRemaining model)
+            | totalToLoad = Set.union model.totalToLoad model.textures.loading
             , starting = calculateRemaining model > 0
         }
 
@@ -249,12 +249,11 @@ view model =
         let
             remaining =
                 calculateRemaining model
+
+            toLoad =
+                Set.size model.totalToLoad + 4
         in
-        Maybe.unwrap none
-            (\initialLoad ->
-                loadingBar initialLoad (initialLoad - remaining)
-            )
-            model.initialLoad
+        loadingBar toLoad (toLoad - remaining)
 
     else
         div []
@@ -364,22 +363,20 @@ namePlates player others =
 
 playerList : Dict String ( Character, Vec2 ) -> Html GameMsg
 playerList players =
-    div [ class "overlay", onClick TogglePlayerList ]
-        [ div [ class "modal" ]
-            [ div [ class "header" ] [ textSpan "Players" ]
-            , div [ class "body" ]
-                (Dict.toList players
-                    |> List.map
-                        (\( username, ( character, coords ) ) ->
-                            div [ class "player" ]
-                                [ div [ class "avatar", style "background-image" ("url(" ++ Character.url character.skin ++ ")") ] []
-                                , textSpan username
-                                , textSpan ("x: " ++ String.fromInt (round character.coords.x))
-                                , textSpan ("y: " ++ String.fromInt (round character.coords.y))
-                                ]
-                        )
-                )
-            ]
+    modal (Just TogglePlayerList)
+        [ div [ class "header" ] [ textSpan "Players" ]
+        , div [ class "body" ]
+            (Dict.toList players
+                |> List.map
+                    (\( username, ( character, coords ) ) ->
+                        div [ class "player" ]
+                            [ div [ class "avatar", style "background-image" ("url(" ++ Character.url character.skin ++ ")") ] []
+                            , textSpan username
+                            , textSpan ("x: " ++ String.fromInt (round character.coords.x))
+                            , textSpan ("y: " ++ String.fromInt (round character.coords.y))
+                            ]
+                    )
+            )
         ]
 
 
